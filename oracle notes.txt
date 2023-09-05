@@ -489,3 +489,68 @@ CREATE OR REPLACE DIRECTORY bfile_dir AS '/private1/LOB/files';
 6. group by rollup(column_1,..)|cube(column_1,..) --Used for finding subtotal and grand total based on columns
 	--ROLLUP will find total based on a single column
 	--CUBE will find total based on a multiple column
+
+	
+	
+	
+--STRING FUNCTION
+1. ASCII('A')	:65	Returns an ASCII code value of a character.
+2. CHR('65')	:'A'	Converts a numeric value to its corresponding ASCII character.
+3. CONCAT('A','BC')	:'ABC'	Concatenate two strings and return the combined string.
+4. CONVERT( 'Ä Ê Í', 'US7ASCII', 'WE8ISO8859P1' )	:'A E I'	Convert a character string from one character set to another.
+5. DUMP('A')	:Typ=96 Len=1: 65	Return a string value (VARCHAR2) that includes the datatype code, length measured in bytes, and internal representation of a specified expression.
+6. INITCAP('hi  there')	:'Hi There'	Converts the first character in each word in a specified string to uppercase and the rest to lowercase.
+7. INSTR( 'This is a playlist', 'is')	:3	Search for a substring and return the location of the substring in a string
+8. LENGTH('ABC')	:3	Return the number of characters (or length) of a specified string
+9. LOWER('Abc')	:'abc'	Return a string with all characters converted to lowercase.
+10. LPAD('ABC',5,'*')	:'**ABC'	Return a string that is left-padded with the specified characters to a certain length.
+11. LTRIM(' ABC ')	:'ABC  '	Remove spaces or other specified characters in a set from the left end of a string.
+12. REGEXP_COUNT('1 2 3 abc','\d')	:3	Return the number of times a pattern occurs in a string.
+13. REGEXP_INSTR( 'Y2K problem','\d+')	:2	Return the position of a pattern in a string.
+14. REGEXP_LIKE( 'Year of 2017','\d+' )	:true	Match a string based on a regular expression pattern.
+15. REGEXP_REPLACE( 'Year of 2017','\d+', 'Dragon' )	:'Year of Dragon'	Replace substring in a string by a new substring using a regular expression.
+16. REGEXP_SUBSTR( 'Number 10', '\d+' )	:10	Extract substrings from a string using a pattern of a regular expression.
+17. REPLACE('JACK AND JOND','J','BL')	:'BLACK AND BLOND'	Replace all occurrences of a substring by another substring in a string.
+18. RPAD('ABC',5,'*')	:'ABC**'	Return a string that is right-padded with the specified characters to a certain length.
+19. RTRIM(' ABC ')	:' ABC'	Remove all spaces or specified character in a set from the right end of a string.
+20. SOUNDEX('sea')	:'S000'	Return a phonetic representation of a specified string.
+21. SUBSTR('Oracle Substring', 1, 6 )	:'Oracle'	Extract a substring from a string.
+22. TRANSLATE('12345', '143', 'bx')	:'b2x5'	Replace all occurrences of characters by other characters in a string.
+23. TRIM(' ABC ')	:'ABC'	Remove the space character or other specified characters either from the start or end of a string.
+24. UPPER('Abc')	:'ABC'	Convert all characters in a specified string to uppercase.
+
+--DATE FUNCTION
+1. ADD_MONTHS( DATE '2016-02-29', 1 )	:31-MAR-16	Add a number of months (n) to a date and return the same day which is n of months away.
+2. CURRENT_DATE			:06-AUG-2017 19:43:44	Return the current date and time in the session time zone
+3. SYSDATE				:01-AUG-17	Return the current system date and time of the operating system where the Oracle Database resides.
+4. CURRENT_TIMESTAMP	:06-AUG-17 08.26.52.742000000 PM -07:00	Return the current date and time with time zone in the session time zone
+5. SYSTIMESTAMP			:01-AUG-17 01.33.57.929000000 PM -07:00	Return the system date and time that includes fractional seconds and time zone.
+6. LOCALTIMESTAMP		:06-AUG-17 08.26.52.742000000 PM	Return a TIMESTAMP value that represents the current date and time in the session time zone.
+7. DBTIMEZONE			:-07:00	Get the current database time zone
+8. SESSIONTIMEZONE		:-07:00	Get the session time zone
+9. EXTRACT(YEAR FROM SYSDATE)	:2017	Extract a value of a date time field e.g., YEAR, MONTH, DAY, … from a date time value.
+10. FROM_TZ(TIMESTAMP '2017-08-08 08:09:10', '-09:00')	:08-AUG-17 08.09.10.000000000 AM -07:00	Convert a timestamp and a time zone to a TIMESTAMP WITH TIME ZONE value. LAST_DAY(DATE '2016-02-01')	:29-FEB-16	Gets the last day of the month of a specified date. 
+11. NEXT_DAY( DATE '2000-01-01', 'SUNDAY' )	:02-JAN-00	Get the first weekday that is later than a specified date.
+12. ROUND(DATE '2017-07-16', 'MM')	:01-AUG-17	Return a date rounded to a specific unit of measure.
+13. MONTHS_BETWEEN( DATE '2017-07-01', DATE '2017-01-01' )	:6	Return the number of months between two dates. 
+14. NEW_TIME( TO_DATE( '08-07-2017 01:30:45', 'MM-DD-YYYY HH24:MI:SS' ), 'AST', 'PST' )	:06-AUG-2017 21:30:45	Convert a date in one time zone to another
+15. TZ_OFFSET( 'Europe/London' )	:+01:00	Get time zone offset of a time zone name from UTC
+16. TO_CHAR( DATE'2017-01-01', 'DL' )	:Sunday, January 01, 2017	Convert a DATE or an INTERVAL value to a character string in a specified format.
+17. TO_DATE( '01 Jan 2017', 'DD MON YYYY' )	:01-JAN-17	Convert a date which is in the character string to a DATE value.
+18. TRUNC(DATE '2017-07-16', 'MM')	:01-JUL-17	Return a date truncated to a specific unit of measure.
+
+--ANALYTICAL FUNCTION 
+1. CUME_DIST	Calculate the cumulative distribution of a value in a set of values
+2. DENSE_RANK	Calculate the rank of a row in an ordered set of rows with no gaps in rank values.
+3. RANK			Calculate the rank of a value in a set of values.
+4. LAG			Provide access to a row at a given physical offset that comes before the current row without using a self-join.
+5. LAST_VALUE	Get the value of the last row in a specified window frame.
+6. LEAD			Provide access to a row at a given physical offset that follows the current row without using a self-join.
+7. NTH_VALUE	Get the Nth value in a set of values.
+8. NTILE		Divide an ordered set of rows into a number of buckets and assign an appropriate bucket number to each row.
+9. PERCENT_RANK	Calculate the percent rank of a value in a set of values.
+10. FIRST_VALUE	Get the value of the first row in a specified window frame.
+11. ROW_NUMBER	Assign a unique sequential integer starting from 1 to each row in a partition or in the whole result
+
+RANK() OVER(PARTITION BY category_id
+	ORDER BY list_price DESC) price_rank
