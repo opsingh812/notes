@@ -1,0 +1,220 @@
+############################################## CTID and MVCC ############################################## 
+CTID is like rowid;
+(79920,37)
+first digit (0) represents the page number, and the second (1) stands for the tuple number
+
+* Updating a records will create new CTID; so its unique.
+* Its used in MVCC since old values is still having CTID and is avalaiable, but not visible.
+** BUT : The VACUUM FULL <TABLE_NAME> rewrites the tables, and the ctid is reset.
+** The VACUUM ANALYZE <TABLE_NAME> will free up the unused CTID and will those will be assigned to new records.
+https://www.enterprisedb.com/postgres-tutorials/what-equivalent-rowid-postgresql#:~:text=The%20ctid%20field%20is%20a,the%20location%20of%20the%20tuple.
+
+
+### DATABASE Backup
+pg_dump database_name > filename.sql
+
+####### ADVANTAGES OF POSTGRES
+1. MVCC  - used to prevent unnecessary database locking
+2. Write-Ahead Logging : enhances database reliability by logging changes before any changes or updates are made to the database
+3. full-text search
+
+
+######## SELECT with offset and fetch
+select * from stg_tech_schedule_esm order by serial_number
+offset 3 rows
+fetch first 5 row only;
+
+########## Escape character
+We can override the default escape character in PostgreSQL by providing the ESCAPE modifier as follows:
+SELECT *
+FROM employees
+WHERE last_name LIKE 'G!%' ESCAPE '!';
+
+####### DATATYPE
+numeric(m,d)	Where m is the total digits and d is the number of digits after the decimal.
+BYTEA		Store blob data
+TEXT		Store clob data
+JSON		Store json data
+XML		Store xml data
+BOOLEAN		Store true/false
+
+SMALLINT	2 Byte
+INTEGER		4 Byte
+BIGINT		8 Byte
+NUMERIC(x,y)	1234.567 has the precision(x) 7 and scale(y) 3
+
+
+###### ALTER TABLE
+--Add Column
+ALTER TABLE table_name
+  ADD new_column_name column_definition,
+  ADD new_column_name column_definition);
+
+--Alter Column Type
+ALTER TABLE table_name
+  ALTER COLUMN column_name TYPE column_definition,
+  ALTER COLUMN column_name TYPE column_definition);
+
+--Alter Column Name
+ALTER TABLE table_name
+  RENAME COLUMN old_name TO new_name;
+
+--Drop Column  
+ALTER TABLE table_name
+  DROP COLUMN column_name;
+  
+  
+######## INDEXES 
+CREATE [UNIQUE] INDEX [CONCURRENTLY] index_name
+  [ USING BTREE | HASH | GIST | SPGIST | GIN ]
+  ON table_name
+    (index_col1 [ASC | DESC], 
+     index_col2 [ASC | DESC]);
+
+BTREE	Balanced Tree for <,> check
+HASH	Hash Index for = check
+GIST	Generalized Search Tre
+SPGIST	Space Partitioned 
+GIN	Generalized Inverted Index
+BRIN	Block Range Index
+
+
+pg_stat_activity
+pg_user
+pg_settings
+pg_class
+
+######## VACUUM 
+
+VACUUM statement is used to reclaim storage by removing obsolete data or dead tuples
+
+VACUUM [FULL] [FREEZE] [VERBOSE] [table_name ]; 
+VACUUM [FULL] [FREEZE] [VERBOSE] ANALYZE table_name [ (col1, col2, ... col_n) ]; (Gather Stats)
+
+FULL : full contents of the table into a new file; effective but slow
+
+Each time you perform an update on a table, the original record is kept in the database. 
+A vacuum will remove these old records (ie: tuples) and reduce the size of the PostgreSQL database.
+You can only those vacuum tables in which you have VACUUM permissions.
+You can not run a VACUUM command within a transaction.
+
+
+VACUUM table_name; free up the space within the table and leave the space available to be used by only the table.
+VACUUM FULL table_name; This would not only free up the unused space in the table, 
+			but it would also allow the operating system to reclaim the space and reduce the database size.
+						
+SELECT *
+FROM pg_settings 
+WHERE name LIKE 'autovacuum%'; -- change settings to automate vacuum process						
+						
+######## STRING FUNCTIONS 
+
+localtime( [ precision ] ) / localtime( [ precision ] )
+SELECT localtimestamp(3);--2014-04-24 20:18:08.587
+SELECT localtime;		 --20:55:09.808294
+
+now( ) /current_timestamp /current_time 
+select now(); 			--2023-06-05 15:54:46.568493+00
+select current_time;	--15:55:32.116365+00:00
+
+AGE(time1- time2)-- interval
+
+EXTRACT(year from timestamp)/  DATE_PART('year', timestamp)
+
+TRUNC( number, [ decimal_places ] )
+SELECT trunc(125.315, 2);--125.31
+SELECT trunc(125.315, -1);--120
+
+BTRIM( string, trim_character ) / ltrim( string, trim_character ) / rtrim( string, trim_character ) / trim( [ leading | trailing | both ] [ trim_character ] from string )
+SELECT btrim('123Te123ch123', '123');	--Te123ch
+SELECT btrim('    XYZ    ');			--XYZ
+
+
+LPAD( string, length, pad_string ) / rpad( string, length, pad_string )
+SELECT LPAD('abc', 10, 'XYZ');--XYZXYZXabc
+SELECT RPAD('abc', 10, 'XYZ');--abcXYZXYZX
+
+
+INITCAP( string )
+select INITCAP('Learn PostgreSQL with Tech on the Net!');--Learn Postgresql With Tech On The Net!
+
+
+POSITION( substring in string ) / STRPOS( string, substring )
+SELECT POSITION('h' in 'techonthenet.com'); --4
+
+
+REPEAT( string, number )
+SELECT REPEAT('a', 5);	--aaaaa
+
+
+REPLACE( string, from_substring, to_substring )
+SELECT REPLACE('abc abc', 'a', 'B');	--Bbc Bbc
+SELECT REPLACE('monthoxyzn', 'on', 'ABC'); --mABCthoxyzn			*Whole String is replaced
+
+TRANSLATE( string1, string_to_replace, replacement_string)
+SELECT TRANSLATE('monthoxyzn', 'on', 'ABC');--mABthAxyzB			*Characarter by character is replaced
+
+
+SUBSTRING( string [from start_position] [for length] ) / SUBSTRING ( string ,start_position , length )
+SELECT SUBSTRING('PostgreSQL' from 1 for 8);	-- PostgreS
+SELECT SUBSTRING ('PostgreSQL', 1, 8);			-- PostgreS
+
+SUBSTRING(string FROM pattern) / SUBSTRING(string,pattern) 
+SELECT SUBSTRING ('The house no. is 9001','([0-9]{1,4})') -- 9001
+select SUBSTRING('vimal.verma@gmail.com' from '^(.*)@'); --vimal.verma
+select SUBSTRING('vimal.verma@gmail.com' from '@(.*)$'); --gmail.com
+
+FORMAT('%s, %s',string1, string2)
+FORMAT('%s, %s',last_name, first_name); --Singh, Omendra
+
+MD5(string)
+MD5 Hash
+
+CONCAT_WS(separator, string_1, string_2, ...);
+
+
+########### TRANSCATION MANAGEMENT
+Postgres doesn't support PRAGMA AUTONOMOUS TRANSACTION;
+Instead use SAVEPOINT;
+...
+SAVEPOINT x;
+...
+ROLLBACK TO SAVEPOINT x;
+...
+COMMIT;
+
+############# DEBUGGING PROCEDURE/FUNCTION
+use RAISE DEBUG/NOTICE/INFO/WARNING/EXCEPTION
+RAISE NOTICE 'Hello %. Current Time is %','Omendra',CURRENT_TIMESTAMP;
+RAISE EXCEPTION 'Invalid Input' USING MESSAGE='Something's wrong',
+				HINT='Please check input',
+				DETAIL='Input must be larger than expected',
+				ERRCODE='22000'
+
+create or replace function testing(p_input varchar)
+returns varchar
+language plpgsql as $func$
+begin
+	raise notice 'Greeting! % at %',concat_ws(' ','Hello',p_input),current_timestamp;
+	raise info 'Greeting! % at %',concat_ws(' ','Hello',p_input),current_timestamp;
+	raise warning 'Greeting! % at %',concat_ws(' ','Hello',p_input),current_timestamp;
+	return concat_ws(' ','Hello',p_input);
+end;
+$func$;
+select testing('Koshi');
+
+############ BACKUP RECOVERY
+BACKUP
+1. Logical Backup:	PG_DUMP will create sql for all schema and data.
+2. Physical Backup:	PG_BASEBACKUP creates binary copy of the database file.
+
+RECOVERY
+1. Point-In-Time Recovery (PITR): Using Write Ahead Log and Physical Backup.
+2. Warm Standby:  Create Standby Server and keep it up to date using replication.
+3. Hot Standby:   Create standby server and alow SELECT on it, so as to reduce load on primary server while replication.
+4. Replication Slot:	Mechanism of managing the flow of WAL files between primary and stand by server
+
+REPLICATION
+1. Streaming Replication
+2. Log Shipping
+

@@ -1,0 +1,447 @@
+###########################################################################################################################
+--EXCEPTION
+1. Internally defined exceptions, which arise from the Oracle Database environment ORA-27102 (out of memory)
+2. Predefined exceptions are errors which occur during the execution of the program.ZERO_DIVIDE, NO_DATA_FOUND, TOO_MANY_ROWS, INVALID_CURSOR,INVALID_NUMBER 	
+3. User-defined exceptions are custom exception defined by users like you. User-defined exceptions must be raised explicitly.
+
+The following table illustrates the differences between exception categories.
+
+	Category			Definer			Has Error Code			Has Name				Raised Implicitly	Raised Explicitly
+	--------------------------------------------------------------------------------------------------------------------------
+	Internally defined	Runtime system	Always					Only if you assign one	Yes					Optionally
+	Predefined			Runtime system	Always					Always					Yes					Optionally
+	User-defined		User			Only if you assign one	Always					No					Always
+
+declare
+    invalid_age exception; --user defined exception
+    pragma exception_init(invalid_age,-20100); -- this generates error code for UDI.-20,999 to -20,000
+    age number := 10;
+begin
+    if age< 18 then
+       --raise invalid_age;
+       raise_application_error(-20100,'Under Age hai'); -- for user defined message
+    end if;
+exception
+    when invalid_Age then    
+    dbms_output.put_line(SQLERRM);    
+    dbms_output.put_line(SQLCODE);   
+	RAISE; -- reraise exception 
+end ;
+
+
+###########################################################################################################################
+--PROCEDURE 
+returning result set from procedure
+
+c_customers SYS_REFCURSOR;
+dbms_sql.return_result(c_customers);
+
+###########################################################################################################################
+
+--FUNCTIONS
+We can not place any DML statement inside a function simply. 
+--This can be achieved by : PRAGMA autonomous_transaction;
+AND
+A function with a DML statement cannot be used inside a SELECT query.
+--This can be achieved by calling the function in an anonymous block
+
+https://www.oracleappsdna.com/2013/06/how-to-use-dml-statements-in-a-function/ 
+
+--OVERLOADING EXAMPLE
+TO_CHAR(1210.73, '$9,999.00')
+Result: ' $1,210.73' -- number to varchar
+
+TO_CHAR(sysdate, 'MON DDth, YYYY')
+Result: 'JUL 09TH, 2003' -- date to varchar
+
+###########################################################################################################################
+--RECORDS
+1. table-based, 
+		record_name table_name%ROWTYPE;
+2. cursor-based
+		record_name cursor_name%ROWTYPE;
+3. programmer-defined (can be nested)
+		TYPE record_type IS RECORD (
+			field_name1 data_type1 [[NOT NULL] := | DEFAULT default_value],
+			field_name2 data_type2 [[NOT NULL] := | DEFAULT default_value],
+			...
+		);
+		record_name record_type;
+
+###########################################################################################################################
+
+--CURSOR (pointer that points to a result of a query)
+1. Implicit cursors : automatically created by oracle when DML is done.
+		* SQL%ROWCOUNT, SQL%ISOPEN, SQL%FOUND, and SQL%NOTFOUND
+2. Explicit cursors : SELECT statement declared explicitly in the declaration section of the current block or a package specification.
+		* we have to control over its execution cycle from OPEN, FETCH, and CLOSE
+		* cursor_name%ROWCOUNT, cursor_name%ISOPEN, cursor_name%FOUND, and cursor_name%NOTFOUND
+
+--LIFE CYCLE 
+DECLARE
+  CURSOR summary (fromDate date := '01-JAN-2022')
+  IS
+    SELECT summary_date,uuid FROM gps_daily_summary
+    where 
+        summary_date >= fromDate and uuid='KS8419';
+		
+   type summary_type is record(
+        summary_date    gps_daily_summary.summary_date%TYPE,
+        uuid            gps_daily_summary.uuid%TYPE
+   );
+   summary_record summary_type;     
+BEGIN
+  OPEN summary; --OPEN 
+  LOOP
+    fetch summary into summary_record; --FETCH
+    exit when summary%NOTFOUND; --CHECK IF EMPTY
+    dbms_output.put_line( summary_record.summary_Date || '    ' ||  summary_record.uuid);    
+  END LOOP;
+  close summary; --CLOSE
+END;
+
+
+--WHEN YOU DONT WANT TO MANAGE LIFE CYCLE then use CURSOR FOR LOOP
+DECLARE
+  CURSOR summary (fromDate date default '01-JAN-2022')
+  IS
+    SELECT 
+        summary_date,uuid
+    FROM 
+        gps_daily_summary
+    where 
+        summary_date >= fromDate
+        and uuid='KS8419'
+    ORDER BY 
+        summary_date;
+BEGIN
+  FOR rec IN summary('01-DEC-2022') --CURSOR FOR LOOP (no need to manage cursor cycle)
+  LOOP
+    dbms_output.put_line( rec.summary_Date || '    ' ||  rec.uuid);
+  END LOOP;
+END;
+
+
+--TYPES OF REF CURSOR 
+DECLARE
+    TYPE customer_t IS REF CURSOR RETURN customers%ROWTYPE;	-- STRONG REF CURSOR(cursor variable is always associated with a specific record structure, or type.)
+	c_customer customer_t;
+		OR	
+    TYPE customer_t IS REF CURSOR; 							-- WEAK REF CURSOR (declaration that is not associated with any specific structure:)
+	c_customer customer_t;
+		OR
+	c_customer SYS_REFCURSOR;								-- WEAK REF CURSOR (PREDEFINED by ORACLE)
+
+
+-- ref cursor example
+DECLARE
+  type summary_type is record(
+    summary_date    gps_daily_summary.summary_date%TYPE,
+        uuid            gps_daily_summary.uuid%TYPE
+  );
+   summary_record summary_type;
+   
+    type ref_cur is ref cursor return summary_type;
+    ref_cur_summary ref_cur;
+BEGIN
+  OPEN ref_cur_summary for 
+  SELECT 
+        summary_date,uuid
+    FROM 
+        gps_daily_summary
+    where 
+        summary_date >= '01-DEC-2022'
+        and uuid='KS8419'
+    ORDER BY 
+        summary_date;
+  LOOP
+    fetch ref_cur_summary into summary_record;
+    exit when ref_cur_summary%NOTFOUND;
+    dbms_output.put_line( summary_record.summary_Date || '    ' ||  summary_record.uuid);    
+  END LOOP;
+  close ref_cur_summary;
+END;
+
+--CURSOR FOR UPDATE 
+if we want to lock a set of rows before you can update them in your program.
+CURSOR cursor_name IS
+    SELECT select_clause
+    FROM from_clause
+    WHERE where_clause
+    FOR UPDATE;
+	--FOR UPDATE OF column_name;
+
+###########################################################################################################################
+--TRIGGER
+CREATE OR REPLACE TRIGGER customers_audit_trg
+    AFTER 
+    UPDATE OR DELETE OR INSERT
+    ON customers
+    FOR EACH ROW
+
+--MUTATING TABLE ERROR
+First, you update data to a table.
+Second, a row-level trigger associated with the table automatically fires and makes another change to the table.
+--HOW TO FIX
+First, declare an array of customer record that includes customer id and credit limit.
+Second, collect affected rows into the array in the row-level trigger.
+Third, update each affected row in the statement-level trigger.
+https://www.oracletutorial.com/plsql-tutorial/mutating-table-error-in-oracle/
+
+
+--instead of on view
+CREATE OR REPLACE TRIGGER new_customer_trg
+    INSTEAD OF INSERT ON vw_customers
+    FOR EACH ROW
+DECLARE
+    l_customer_id NUMBER;
+BEGIN
+    -- insert a new customer first
+    INSERT INTO customers(name, address, website, credit_limit)
+    VALUES(:NEW.NAME, :NEW.address, :NEW.website, :NEW.credit_limit)
+    RETURNING customer_id INTO l_customer_id;
+    
+    -- insert the contact
+    INSERT INTO contacts(first_name, last_name, email, phone, customer_id)
+    VALUES(:NEW.first_name, :NEW.last_name, :NEW.email, :NEW.phone, l_customer_id);
+END;
+
+###########################################################################################################################
+
+--OPTIMIZING
+
+Use of Proper Indexing Techniques
+	B-Tree (Balanced Tree) Index (default)
+	Bit-map index 
+	Create indexes on group by and order by columns 
+	Avoid indexing on small tables
+	Create Composite indexes 
+	Response Time(first record) and Total Execution time(all records)
+	
+1.Use column names in the Query in-spite of using * operator to select all records
+
+2.Avoid use of Distinct clause in query as it increases the sorts.
+
+3.Avoid Use of not equal to in where clause in-spite of that use greater than and less than operator
+
+4.Avoid Having clause or group by clause if possible.
+
+5.Avoid use of Union statement in the query in-spite of that try to use union all statement.
+
+6. Avoid inner queries and use joins instead.
+
+7. use table partitioning
+
+HINTS
+There are four types of hints:
+
+1. Single-table		one table or view					e.g.: index(tab ix) , use_nl(…)	
+2. Multi-table		multiple table						e.g.: leading(tab_a tab_b)	
+3. Query-block		single query blocks					e.g.: star_transformation(@sel$2) , unnest(@sel$2) , full(@sel$2 t1).Compare with the column qblock_name in the plan_table
+4. Statement		entire SQL statements				e.g.: all_rows	
+NO_INDEX dont use index
+Note that use_nl(tab_a tab_b) is shortcut for use_nl(tab_a) use_nl(tab_b) and therefore is not considered to be a multi-table hint.	
+
+
+
+###########################################################################################################################
+--PARTITIONS
+
+• Range Partition
+	CREATE table sale_product (year number(4),product_name varchar2(10), amount number(10))
+	partition by range (year)
+	(partition p1 values less than(2002),
+	partition p2 values less than(2003),
+	partition p3 values less than(2004),
+	partition p4 values less than(maxvalue));
+
+• Hash Partition (hash value of the partition key)
+	CREATE TABLE product(product_id NUMBER(4), description VARCHAR2 (100))
+	PARTITION BY HASH (product_id)
+	PARTITIONS 4
+	STORE IN (p1, p2, p3, p4);
+• List Partition
+	CREATE table employee_database (employee_id number (5), employee_name varchar2(20),City varchar2(20))
+	Partition by list (City)
+	(Partition p1 values ('NEWDELHI','LUCKNOW'),
+	Partition p2 values ('ASANSOL','JAMSHEDPUR'),
+	Partition P3 values ('MUMBAI', 'GOA'),
+	Partition p4 values ('LONDON','CHICAGO'));
+• Composite Partition
+	CREATE TABLE PRODUCT_LIST (product_id NUMBER, description VARCHAR (100), costprice NUMBER(5))
+	PARTITION BY RANGE (costprice)
+	SUBPARTITION BY HASH(description)
+	SUBPARTITIONS 4 STORE IN (tab1, tab2, tab3, tab4)
+	(PARTITION p1 VALUES LESS THAN (2000),
+	PARTITION p2 VALUES LESS THAN (4000),
+	PARTITION p3 VALUES LESS THAN (MAXVALUE));
+
+###########################################################################################################################
+--COST ANALYSIS
+
+EXPLAIN PLAN FOR 
+SELECT 
+    * FROM   members
+WHERE
+    gender = 'F';
+    
+SELECT 
+    PLAN_TABLE_OUTPUT 
+FROM 
+    TABLE(DBMS_XPLAN.DISPLAY());      
+###########################################################################################################################
+
+--MV REFRESH
+* The in-place refresh executes the refresh statements directly on the materialized view.
+* The out-of-place refresh creates one or more outside tables and executes the refresh statements on the outside tables 
+	and then switches the materialized view with the outside tables.
+
+CREATE MATERIALIZED VIEW view-name
+BUILD [IMMEDIATE | DEFERRED]
+REFRESH [FAST | COMPLETE | FORCE ]
+ON [COMMIT | DEMAND ]
+[[ENABLE | DISABLE] QUERY REWRITE]
+AS
+SELECT ...;
+
+
+1. when changes to the underlying objects are committed, 
+2. on demand, (default ): DBMS_MVIEW.REFRESH('mv_name','f')
+3. at specified time intervals,
+4. never refresh.
+###########################################################################################################################
+
+--GOTO 
+BEGIN
+  GOTO second_message;
+  <<first_message>>
+  DBMS_OUTPUT.PUT_LINE( 'Hello' );
+  GOTO the_end;
+  <<second_message>>
+  DBMS_OUTPUT.PUT_LINE( 'PL/SQL GOTO Demo' );
+  GOTO first_message;
+  <<the_end>>
+  DBMS_OUTPUT.PUT_LINE( 'and good bye...' );
+END;
+
+--creat table with constaints
+create table department(
+department_id varchar2(5) primary key ,
+department_name varchar2(10) unique check(REGEXP_LIKE(department_name,'^[a-zA-Z]$')),
+department_head varchar2(20)
+);
+
+create table employee(
+employee_id varchar2(5) constraint employee_pk primary key,
+employee_name varchar2(10),
+department_id varchar2(5) REFERENCES  departments(department_id) 
+--department_id references departments(department_id) 
+--constraint emp_dep_fk foreign key(department) references departments(department_id) 
+ON DELETE [ CASCADE | SET NULL ] -- delete|set null, record in this table if parent record is deleted.
+);
+
+
+loop 
+DBMS_SCHEDULER.CREATE_JOB (job_name       => v_mgr_loop || v_loop_idx,
+                                    program_name   => v_program_name,
+                                    start_date     => SYSTIMESTAMP);
+
+DBMS_SCHEDULER.SET_JOB_ARGUMENT_VALUE (
+            job_name            => v_mgr_loop || v_loop_idx,
+            argument_position   => 1,
+            argument_value      => v_loop_idx);
+DBMS_SCHEDULER.SET_JOB_ARGUMENT_VALUE (
+            job_name            => v_mgr_loop || v_loop_idx,
+            argument_position   => 2,
+            argument_value      => n_in_lvl_nbr);
+
+DBMS_SCHEDULER.ENABLE (name => v_mgr_loop || v_loop_idx);         
+
+--MERGE
+
+MERGE INTO target_table 
+USING source_table 
+ON search_condition
+    WHEN MATCHED THEN
+        UPDATE SET col1 = value1, col2 = value2,...
+        WHERE <update_condition>
+        [DELETE WHERE <delete_condition>]
+    WHEN NOT MATCHED THEN
+        INSERT (col1,col2,...)
+        values(value1,value2,...)
+        WHERE <insert_condition>;
+	
+--TRANSLATE vs REPLACE	
+1. TRANSLATE (‘ABCED’,’AC’,’ac’)
+Result: aBcED
+Note: Here it changes character by character. If no replacement for a character then it will be replaced to Blank.
+
+2. REPLACE (‘ABCED’,’AB’,’acvv’)
+Result: acvvCED
+Note: Here it changes one pattern by another.
+
+--USING
+USING clause specifies which columns to test for equality when two tables are joined.
+
+--ROWNUM and ROWID
+ROWID uniquely identifies where a row resides on disk.  
+The information in a ROWID gives Oracle everything he needs to find your row, the disk number, the cylinder, block and offset into the block. 
+eg. AAxJasAB5AAABSDAAA,AAxJasAB5AAABSDAAB
+
+ROWNUM is a "pseudo-column", a placeholder that you can reference.
+eg. 1,2,3
+
+
+--count(1),count(*),count(col_name)
+count(*) : 			number of rows in the table, counting nulls as well.
+count(1) : 			same as count(*); any number wont matter   count(1)=count(-13)
+count(col_name):	number of non null values in that column;
+
+--GLOBAL TEMP TABLE
+* data inserted by a session can only be accessed by that session.
+CREATE GLOBAL TEMPORARY TABLE my_temp_table (
+  id           NUMBER,
+  description  VARCHAR2(20)
+)
+ON COMMIT DELETE ROWS; -- data should be deleted at the end of the transaction, or the end of the session  
+ON COMMIT PRESERVE ROWS;--rows should persist beyond the end of the transaction. They will only be removed at the end of the session
+
+--CASE vs DECODE
+	1. case is statement and decode is a function.
+	2. decode checks for equality and case works with all logical operators. (<,>,=, between, like)
+	3. We can use a subquery in case. not in decode.
+
+--HIERARCHICAL QUERY
+SELECT
+    level,
+    CONNECT_BY_ISCYCLE isThereACycle, 
+    SYS_CONNECT_BY_PATH(resource_type,'\\') path,
+    resource_id,
+    parent_resource_id,
+    resource_name,
+    resource_type
+FROM
+    dle_resource_hierarchy
+WHERE
+    active_flag = 'Y'
+    AND REGEXP_LIKE ( resource_type,'^(xBusiness Unit|Region|AOI|AG|Routing Area)$' )
+start with 
+    resource_name='CFO'
+connect by  nocycle
+     prior resource_id=  parent_resource_id     
+order siblings by resource_name;
+
+--postgres
+with recursive cte_query as (
+	select
+		empno,	ename,	job,	mgr 
+	from	emp
+	where
+		empno = 7876
+	union all
+	select
+		e.empno,	e.ename,	e.job,	e.mgr
+	from emp e
+	inner join cte_query c on c.mgr = e.empno 
+)select	* from	cte_query;
+
