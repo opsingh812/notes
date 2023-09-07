@@ -473,7 +473,7 @@ CREATE OR REPLACE DIRECTORY bfile_dir AS '/private1/LOB/files';
 
 --Points to remember
 
-1. select * from dual; 1 column : dummy of varchar2 with 1 value 'X'
+1. select * from dual; 1 column : dummy of varchar2 with one value 'X'
 
 2. order by column_1 [ASC | DESC] [NULLS FIRST | NULLS LAST]
 
@@ -482,16 +482,29 @@ CREATE OR REPLACE DIRECTORY bfile_dir AS '/private1/LOB/files';
 4. LIKE '%25!%%' ESCAPE '!' ; 
 
 5. GENERATED [ALWAYS | BY DEFAULT[ ON NULL ]] AS IDENTITY [ ( identity_options ) ] 
---ALWAYS 		will be inserted only by oracle,
---BY DEFAULT 	will be inserted by user else oracle will insert.  (error if user give null)
---BY DEFAULT ON NULL	 will be inserted by user else oracle will insert (oracle will insert if null is given by user)
+	--ALWAYS 		will be inserted only by oracle,
+	--BY DEFAULT 	will be inserted by user else oracle will insert.  (error if user give null)
+	--BY DEFAULT ON NULL	 will be inserted by user else oracle will insert (oracle will insert if null is given by user)
 
 6. group by rollup(column_1,..)|cube(column_1,..) --Used for finding subtotal and grand total based on columns
 	--ROLLUP will find total based on a single column
 	--CUBE will find total based on a multiple column
+	
+7. virtual column adding
+	--ALTER TABLE Products ADD (TotalValue INT GENERATED ALWAYS AS (Qty * Price) VIRTUAL);
+	
+8. NVL(ex1,ex2) --ex1 is returned if itsnot null else ex2
+	NVL2(ex1,ex2,ex3) -- if ex1 is null then ex3 else ex2
+	DECODE(GENDER_COL,'M','MALE','F','FEMALE','NOT DISCLOSED') as GENDER
+	COALESCE(ex1,ex2,ex3..) -- takes multiple values and returns first non null.
+	NULLIF(ex1,ex2) --returns NULL if ex1=ex2 else ex1
+	EMPTY_BLOB/EMPTY_CLOB() function returns an empty LOB locator
+	BFILENAME( 'directory', 'filename' ) returns a BFILE locator.
+	CARDINALITY( nested_table_column ) returns the number of elements in a nested table.
+	
 
-	
-	
+
+
 	
 --STRING FUNCTION
 1. ASCII('A')	:65	Returns an ASCII code value of a character.
@@ -500,7 +513,7 @@ CREATE OR REPLACE DIRECTORY bfile_dir AS '/private1/LOB/files';
 4. CONVERT( 'Ä Ê Í', 'US7ASCII', 'WE8ISO8859P1' )	:'A E I'	Convert a character string from one character set to another.
 5. DUMP('A')	:Typ=96 Len=1: 65	Return a string value (VARCHAR2) that includes the datatype code, length measured in bytes, and internal representation of a specified expression.
 6. INITCAP('hi  there')	:'Hi There'	Converts the first character in each word in a specified string to uppercase and the rest to lowercase.
-7. INSTR( 'This is a playlist', 'is')	:3	Search for a substring and return the location of the substring in a string
+7. INSTR( 'This is a playlist', 'is')	:3	Search for a substring and return the location of the substring in a string INSTR( string, substring [, start_position [, th_appearance ] ] ) 	
 8. LENGTH('ABC')	:3	Return the number of characters (or length) of a specified string
 9. LOWER('Abc')	:'abc'	Return a string with all characters converted to lowercase.
 10. LPAD('ABC',5,'*')	:'**ABC'	Return a string that is left-padded with the specified characters to a certain length.
@@ -531,13 +544,13 @@ CREATE OR REPLACE DIRECTORY bfile_dir AS '/private1/LOB/files';
 9. EXTRACT(YEAR FROM SYSDATE)	:2017	Extract a value of a date time field e.g., YEAR, MONTH, DAY, … from a date time value.
 10. FROM_TZ(TIMESTAMP '2017-08-08 08:09:10', '-09:00')	:08-AUG-17 08.09.10.000000000 AM -07:00	Convert a timestamp and a time zone to a TIMESTAMP WITH TIME ZONE value. LAST_DAY(DATE '2016-02-01')	:29-FEB-16	Gets the last day of the month of a specified date. 
 11. NEXT_DAY( DATE '2000-01-01', 'SUNDAY' )	:02-JAN-00	Get the first weekday that is later than a specified date.
-12. ROUND(DATE '2017-07-16', 'MM')	:01-AUG-17	Return a date rounded to a specific unit of measure.
+12. TO_DATE( '01 Jan 2017', 'DD MON YYYY' )	:01-JAN-17	Convert a date which is in the character string to a DATE value.
 13. MONTHS_BETWEEN( DATE '2017-07-01', DATE '2017-01-01' )	:6	Return the number of months between two dates. 
 14. NEW_TIME( TO_DATE( '08-07-2017 01:30:45', 'MM-DD-YYYY HH24:MI:SS' ), 'AST', 'PST' )	:06-AUG-2017 21:30:45	Convert a date in one time zone to another
 15. TZ_OFFSET( 'Europe/London' )	:+01:00	Get time zone offset of a time zone name from UTC
 16. TO_CHAR( DATE'2017-01-01', 'DL' )	:Sunday, January 01, 2017	Convert a DATE or an INTERVAL value to a character string in a specified format.
-17. TO_DATE( '01 Jan 2017', 'DD MON YYYY' )	:01-JAN-17	Convert a date which is in the character string to a DATE value.
-18. TRUNC(DATE '2017-07-16', 'MM')	:01-JUL-17	Return a date truncated to a specific unit of measure.
+17. ROUND(DATE '2017-07-16', 'MM')	:01-AUG-17	Return a date rounded to a specific unit of measure.
+18. TRUNC(DATE '2017-07-16', 'MM')	:01-JUL-17	Return a date truncated to a specific unit of measure. 
 
 --ANALYTICAL FUNCTION 
 1. CUME_DIST	Calculate the cumulative distribution of a value in a set of values
@@ -554,3 +567,11 @@ CREATE OR REPLACE DIRECTORY bfile_dir AS '/private1/LOB/files';
 
 RANK() OVER(PARTITION BY category_id
 	ORDER BY list_price DESC) price_rank
+	
+	
+	
+--19c/12c features
+1  column multiple index 
+2. APPROX_COUNT_DISTINCT() is similar to count distinct
+3.DISTINCT Option for LISTAGG Aggregate
+4. immutable table and blockchain table
