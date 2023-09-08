@@ -412,24 +412,19 @@ ON COMMIT PRESERVE ROWS;--rows should persist beyond the end of the transaction.
 	3. We can use a subquery in case. not in decode.
 
 --HIERARCHICAL QUERY
-SELECT
-    level,
-    CONNECT_BY_ISCYCLE isThereACycle, 
-    SYS_CONNECT_BY_PATH(resource_type,'\\') path,
-    resource_id,
-    parent_resource_id,
-    resource_name,
-    resource_type
-FROM
-    dle_resource_hierarchy
-WHERE
-    active_flag = 'Y'
-    AND REGEXP_LIKE ( resource_type,'^(xBusiness Unit|Region|AOI|AG|Routing Area)$' )
-start with 
-    resource_name='CFO'
-connect by  nocycle
-     prior resource_id=  parent_resource_id     
-order siblings by resource_name;
+
+SELECT id, parent_id, 
+    LEVEL, --The position in the hierarchy of the current row in relation to the root node.
+    connect_by_root id as root_id, --Returns the root node(s) associated with the current row.
+    SYS_CONNECT_BY_PATH(id, '->') as path,--Returns a delimited breadcrumb from root to the current row.
+    connect_by_Isleaf as IS_LEAF,-- Indicates if the current row is a leaf node.
+    connect_by_iscycle as IS_CYCLE --indicates which record is responsible for the cycle.
+FROM tab1
+       START WITH parent_id is null
+       CONNECT BY 
+       NOCYCLE --used with connect_by_iscycle 
+       PRIOR id = parent_id
+ORDER SIBLINGS BY id;
 
 --postgres
 with recursive cte_query as (
