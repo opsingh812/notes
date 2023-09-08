@@ -570,3 +570,37 @@ RANK() OVER(PARTITION BY category_id
 2. APPROX_COUNT_DISTINCT() is similar to count distinct
 3.DISTINCT Option for LISTAGG Aggregate
 4. immutable table and blockchain table
+
+
+###################### HINTS ######################
+There are 2 main approach to optimize:
+	A. Rule Based Optimization (discontinued after 10g as it limited to handle complex queries) 
+	B. Cost Based Optimization
+
+1. Hints for Optimization Approaches and Goals
+	/*+ ALL_ROWS */ 		--explicitly chooses the cost-based approach to optimize
+	/*+ FIRST_ROWS(10) */ 		--fetch first 10 rows as quickly as possible 
+	/*+ CHOOSE */ 			--optimizer to choose between the rule-based and cost-based approaches
+	/*+ RULE */ 			--explicitly chooses the rule-based approach to optimize
+	
+2. Hints for Access Paths
+	/*+ FULL(e) */			--explicitly chooses a full table scan
+	/*+ ROWID(employees)*/		--explicitly chooses a table scan by rowid
+	/*+ CLUSTER */			--explicitly chooses a cluster scan to access the specified table
+	/*+ HASH */				--explicitly chooses a hash scan to access the specified table
+	/*+ INDEX(idx) */		--explicitly chooses an index scan for the specified table
+
+3. Hints for Query Transformations
+	/*+USE_CONCAT*/			--forces combined OR conditions in the WHERE clause of a query to be transformed into a compound query using the UNION ALL set operator.
+	/*+MERGE(v)*/ 			--lets you merge a view for each inner query.
+	
+4. Hints for Join Orders
+	/*+ORDERED */			--causes Oracle to join tables in the order in which they appear in the FROM clause
+	
+5. Hints for Join Operations
+	/*+ USE_NL(l h) */		--causes Oracle to join each specified table to another row source with a nested loops join
+	/*+ USE_MERGE(l,h) */		--causes Oracle to join each specified table to another row source with a sort merge join
+	/*+ USE_HASH(l h) */		--causes Oracle to join each specified table to another row source with a hash join
+
+6. Hints for Parallel Execution
+	/*+ PARALLEL(hr_emp, 5) */ 	--specify the desired number of concurrent servers that can be used for a parallel operation. 
