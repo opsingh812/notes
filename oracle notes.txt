@@ -182,14 +182,40 @@ CREATE OR REPLACE TRIGGER customers_audit_trg
 --MUTATING TABLE ERROR
 First, you update data to a table.
 Second, a row-level trigger associated with the table automatically fires and makes another change to the table.
---HOW TO FIX
-First, declare an array of customer record that includes customer id and credit limit.
-Second, collect affected rows into the array in the row-level trigger.
-Third, update each affected row in the statement-level trigger.
-https://www.oracletutorial.com/plsql-tutorial/mutating-table-error-in-oracle/
+--HOW TO FIX : "COMPOUND TRIGGER"
+First, collect affected rows into the array in the row-level trigger.
+Second, update each affected row in the statement-level trigger. 
 
+CREATE OR REPLACE TRIGGER customers_credit_limit_trg
+    FOR INSERT OR UPDATE
+    ON customers
+    COMPOUND TRIGGER
+    v_cust_id        NUMBER;
+    v_credit_limit   NUMBER;
+    
+    AFTER EACH ROW
+    IS
+    BEGIN
+        v_credit_limit := :NEW.credit_limit;
+        v_cust_id := :NEW.CUSTOMER_ID;
+        DBMS_OUTPUT.PUT_LINE('VALUE v_credit_limit: '||v_credit_limit);
+        DBMS_OUTPUT.PUT_LINE('VALUE v_cust_id: '||v_cust_id);
+    END AFTER EACH ROW;
 
---instead of on view
+    AFTER STATEMENT
+    IS
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE('STATEMENT TRIGGER');
+        IF v_credit_limit < 1000
+        THEN
+            UPDATE customers
+               SET credit_limit = 1000
+             WHERE customer_id = v_cust_id;
+        END IF;
+    END AFTER STATEMENT;
+END;
+
+--INSTEAD OF trigger on views
 CREATE OR REPLACE TRIGGER new_customer_trg
     INSTEAD OF INSERT ON vw_customers
     FOR EACH ROW
@@ -231,16 +257,6 @@ Use of Proper Indexing Techniques
 6. Avoid inner queries and use joins instead.
 
 7. use table partitioning
-
-HINTS
-There are four types of hints:
-
-1. Single-table		one table or view					e.g.: index(tab ix) , use_nl(…)	
-2. Multi-table		multiple table						e.g.: leading(tab_a tab_b)	
-3. Query-block		single query blocks					e.g.: star_transformation(@sel$2) , unnest(@sel$2) , full(@sel$2 t1).Compare with the column qblock_name in the plan_table
-4. Statement		entire SQL statements				e.g.: all_rows	
-NO_INDEX dont use index
-Note that use_nl(tab_a tab_b) is shortcut for use_nl(tab_a) use_nl(tab_b) and therefore is not considered to be a multi-table hint.	
 
 
 
@@ -426,6 +442,8 @@ FROM tab1
        PRIOR id = parent_id
 ORDER SIBLINGS BY id;
 
+To traverse bottom up, we need to change start with (leaf) and connect by id=prior parent_id
+
 --postgres
 with recursive cte_query as (
 	select
@@ -497,8 +515,10 @@ CREATE OR REPLACE DIRECTORY bfile_dir AS '/private1/LOB/files';
 	BFILENAME( 'directory', 'filename' ) returns a BFILE locator.
 	CARDINALITY( nested_table_column ) returns the number of elements in a nested table.
 	
+9. Use “&&” if you want to reuse the variable value without prompting the user each time.
+	For ex: Select empno, ename, &&column_name from employee order by &column_name;
 
-
+10. CHAR pads blank spaces to a maximum length, whereas VARCHAR2 does not pad blank spaces.
 
 	
 --STRING FUNCTION
@@ -571,7 +591,6 @@ RANK() OVER(PARTITION BY category_id
 3.DISTINCT Option for LISTAGG Aggregate
 4. immutable table and blockchain table
 
-
 ###################### HINTS ######################
 There are 2 main approach to optimize:
 	A. Rule Based Optimization (discontinued after 10g as it limited to handle complex queries) 
@@ -579,13 +598,13 @@ There are 2 main approach to optimize:
 
 1. Hints for Optimization Approaches and Goals
 	/*+ ALL_ROWS */ 		--explicitly chooses the cost-based approach to optimize
-	/*+ FIRST_ROWS(10) */ 		--fetch first 10 rows as quickly as possible 
+	/*+ FIRST_ROWS(10) */ 	--fetch first 10 rows as quickly as possible 
 	/*+ CHOOSE */ 			--optimizer to choose between the rule-based and cost-based approaches
 	/*+ RULE */ 			--explicitly chooses the rule-based approach to optimize
 	
 2. Hints for Access Paths
 	/*+ FULL(e) */			--explicitly chooses a full table scan
-	/*+ ROWID(employees)*/		--explicitly chooses a table scan by rowid
+	/*+ ROWID(employees)*/	--explicitly chooses a table scan by rowid
 	/*+ CLUSTER */			--explicitly chooses a cluster scan to access the specified table
 	/*+ HASH */				--explicitly chooses a hash scan to access the specified table
 	/*+ INDEX(idx) */		--explicitly chooses an index scan for the specified table
@@ -599,8 +618,8 @@ There are 2 main approach to optimize:
 	
 5. Hints for Join Operations
 	/*+ USE_NL(l h) */		--causes Oracle to join each specified table to another row source with a nested loops join
-	/*+ USE_MERGE(l,h) */		--causes Oracle to join each specified table to another row source with a sort merge join
-	/*+ USE_HASH(l h) */		--causes Oracle to join each specified table to another row source with a hash join
+	/*+ USE_MERGE(l,h) */	--causes Oracle to join each specified table to another row source with a sort merge join
+	/*+ USE_HASH(l h) */	--causes Oracle to join each specified table to another row source with a hash join
 
 6. Hints for Parallel Execution
-	/*+ PARALLEL(hr_emp, 5) */ 	--specify the desired number of concurrent servers that can be used for a parallel operation. 
+	/*+ PARALLEL(hr_emp, 5) */ --specify the desired number of concurrent servers that can be used for a parallel operation. 
