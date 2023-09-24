@@ -570,16 +570,16 @@ CREATE OR REPLACE DIRECTORY bfile_dir AS '/private1/LOB/files';
 --ANALYTICAL FUNCTION 
 1. CUME_DIST	Calculate the cumulative distribution of a value in a set of values
 2. DENSE_RANK	Calculate the rank of a row in an ordered set of rows with no gaps in rank values.
-3. RANK		Calculate the rank of a value in a set of values.
-4. LAG		Provide access to a row at a given physical offset that comes before the current row without using a self-join.
-5. LAST_VALUE	Get the value of the last row in a specified window frame.
-6. LEAD		Provide access to a row at a given physical offset that follows the current row without using a self-join.
-7. NTH_VALUE	Get the Nth value in a set of values.
-8. NTILE	Divide an ordered set of rows into a number of buckets and assign an appropriate bucket number to each row.
+3. RANK			Calculate the rank of a value in a set of values.
+4. LAG			Provide access to a row at a given physical offset that comes before the current row without using a self-join.
+5. LEAD			Provide access to a row at a given physical offset that follows the current row without using a self-join.
+6. FIRST_VALUE	Get the value of the first row in a specified window frame.
+7. LAST_VALUE	Get the value of the last row in a specified window frame.
+8. NTILE		Divide an ordered set of rows into a number of buckets and assign an appropriate bucket number to each row.
 9. PERCENT_RANK	Calculate the percent rank of a value in a set of values.
-10. FIRST_VALUE	Get the value of the first row in a specified window frame.
+10. NTH_VALUE	Get the Nth value in a set of values.
 11. ROW_NUMBER	Assign a unique sequential integer starting from 1 to each row in a partition or in the whole result
-12. LISTAGG	returns a string value as delemeted column value 	(max 200 bytes)
+12. LISTAGG		returns a string value as delemeted column value 	(max 200 bytes)
 
 RANK() OVER(PARTITION BY category_id
 	ORDER BY list_price DESC) price_rank
@@ -593,7 +593,7 @@ LISTAGG(last_name, '; ')
 --19c/12c features
 1  column multiple index 
 2. APPROX_COUNT_DISTINCT() is similar to count distinct
-3.DISTINCT Option for LISTAGG Aggregate
+3. DISTINCT Option for LISTAGG Aggregate
 4. immutable table and blockchain table
 
 ###################### HINTS ######################
@@ -628,3 +628,59 @@ There are 2 main approach to optimize:
 
 6. Hints for Parallel Execution
 	/*+ PARALLEL(hr_emp, 5) */ --specify the desired number of concurrent servers that can be used for a parallel operation. 
+
+##################### BULK ##################### 
+
+CREATE OR REPLACE PROCEDURE update_credit (p_sex              IN customers.sex%TYPE,
+                                           p_percent_change   IN NUMBER)
+AS
+    CURSOR customer_cur
+    IS
+        SELECT customer_id
+          FROM customers
+         WHERE sex = p_sex;
+
+    TYPE cust_id_table_type IS TABLE OF customers.customer_id%TYPE;
+    cust_id_table   cust_id_table_type;
+BEGIN
+    DBMS_OUTPUT.put_line ('Inside procedure');
+    OPEN customer_cur;
+    LOOP
+        FETCH customer_cur BULK COLLECT INTO cust_id_table LIMIT 100;
+        --FORALL indx IN 1 .. cust_id_table.COUNT SAVE EXCEPTIONS 
+		FORALL indx IN INDICES OF cust_id_table SAVE EXCEPTIONS --used with sparse collections
+            UPDATE customers
+               SET credit_limit = credit_limit + credit_limit * (p_percent_change / 100)
+             WHERE customer_id = cust_id_table (indx);
+        EXIT WHEN cust_id_table.COUNT = 0;
+    END LOOP;
+    CLOSE customer_cur;
+EXCEPTION
+    WHEN OTHERS
+    THEN
+		IF SQLCODE = -24381
+		THEN
+			DBMS_OUTPUT.put_line ('Error ' || SQLCODE || SQLERRM);
+			FOR indx IN 1 .. SQL%BULK_EXCEPTIONS.COUNT
+			LOOP
+				DBMS_OUTPUT.put_line (
+                  SQL%BULK_EXCEPTIONS (indx).ERROR_INDEX
+				|| ': '
+				|| SQL%BULK_EXCEPTIONS (indx).ERROR_CODE);
+			END LOOP;
+		else 
+			raise;
+		end if;	
+END update_credit;
+
+############################ LOCKING ############################
+
+LOCK TABLE tables IN lock_mode MODE [ WAIT [, integer] | NOWAIT ];
+
+SHARE				Allows concurrent queries but users are prevented from updating the locked table.
+EXCLUSIVE			Allows queries on the locked table, but no other activities.
+
+ROW SHARE/SHARE UPDATE			Allows concurrent access to the table, but users are prevented from locking the entire table for exclusive access.
+
+ROW EXCLUSIVE		Allows concurrent access to the table, but users are prevented from locking the entire table with exclusive access and locking the table in share mode.
+SHARE ROW EXCLUSIVE	Users can view records in table, but are prevented from updating the table or from locking the table in SHARE mode.
