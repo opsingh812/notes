@@ -622,9 +622,9 @@ There are 2 main approach to optimize:
 	/*+ORDERED */			--causes Oracle to join tables in the order in which they appear in the FROM clause
 	
 5. Hints for Join Operations
-	/*+ USE_NL(l h) */		--causes Oracle to join each specified table to another row source with a nested loops join
-	/*+ USE_MERGE(l,h) */	--causes Oracle to join each specified table to another row source with a sort merge join
-	/*+ USE_HASH(l h) */	--causes Oracle to join each specified table to another row source with a hash join
+	/*+ USE_NL(l h) */		--use nested loops join, used for small table. Fetches first rows fast.
+	/*+ USE_MERGE(l,h) */	--use sort merge join, the data must be sorted
+	/*+ USE_HASH(l h) */	--use hash join, hash table is created and matched.
 
 6. Hints for Parallel Execution
 	/*+ PARALLEL(hr_emp, 5) */ --specify the desired number of concurrent servers that can be used for a parallel operation. 
