@@ -68,6 +68,22 @@ Result: 'JUL 09TH, 2003' -- date to varchar
 		);
 		record_name record_type;
 
+--COLLECTIONS
+1. NESTED ARRAY --single-dimensional, unbounded, (initially dense, can be sparse) collections of homogeneous elements.
+		TYPE nested_type IS TABLE OF VARCHAR2(30);
+		v1 := nested_type('Salary','Sales','Budget','Payroll');
+2. VARRAY --single-dimensional, bounded, dense collections of homogeneous elements
+		TYPE varray_type IS VARRAY(5) OF INTEGER;
+		v2 := varray_type(1, 2, 3, 4, 5);
+3. ASSOCIATIVE ARRAY --single-dimensional, unbounded, sparse collections of homogeneous elements		
+		TYPE assoc_array_num_type IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
+		v3(99) := 120;
+		TYPE assoc_array_str_type IS TABLE OF VARCHAR2(32) INDEX BY PLS_INTEGER;
+		v4(42) := 'Sam';
+		TYPE assoc_array_str_type2 IS TABLE OF VARCHAR2(32) INDEX BY VARCHAR2(64);
+		v5('Greece') := 'calfornia';
+
+		FIRST, LAST, COUNT, NEXT, PRIOR, EXTEND,TRIM
 ###########################################################################################################################
 
 --CURSOR (pointer that points to a result of a query)
