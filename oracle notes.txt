@@ -187,6 +187,51 @@ CURSOR cursor_name IS
     FOR UPDATE;
 	--FOR UPDATE OF column_name;
 
+--##################### BULK ##################### 
+
+CREATE OR REPLACE PROCEDURE update_credit (p_sex              IN customers.sex%TYPE,
+                                           p_percent_change   IN NUMBER)
+AS
+    CURSOR customer_cur
+    IS
+        SELECT customer_id
+          FROM customers
+         WHERE sex = p_sex;
+
+    TYPE cust_id_table_type IS TABLE OF customers.customer_id%TYPE;
+    cust_id_table   cust_id_table_type;
+BEGIN
+    DBMS_OUTPUT.put_line ('Inside procedure');
+    OPEN customer_cur;
+    LOOP
+        FETCH customer_cur BULK COLLECT INTO cust_id_table LIMIT 100;
+        --FORALL indx IN 1 .. cust_id_table.COUNT SAVE EXCEPTIONS 
+		FORALL indx IN INDICES OF cust_id_table SAVE EXCEPTIONS --used with sparse collections
+            UPDATE customers
+               SET credit_limit = credit_limit + credit_limit * (p_percent_change / 100)
+             WHERE customer_id = cust_id_table (indx);
+        EXIT WHEN cust_id_table.COUNT = 0;
+    END LOOP;
+    CLOSE customer_cur;
+EXCEPTION
+    WHEN OTHERS
+    THEN
+		IF SQLCODE = -24381
+		THEN
+			DBMS_OUTPUT.put_line ('Error ' || SQLCODE || SQLERRM);
+			FOR indx IN 1 .. SQL%BULK_EXCEPTIONS.COUNT
+			LOOP
+				DBMS_OUTPUT.put_line (
+                  SQL%BULK_EXCEPTIONS (indx).ERROR_INDEX
+				|| ': '
+				|| SQL%BULK_EXCEPTIONS (indx).ERROR_CODE);
+			END LOOP;
+		else 
+			raise;
+		end if;	
+END update_credit;
+
+
 ###########################################################################################################################
 --TRIGGER
 CREATE OR REPLACE TRIGGER customers_audit_trg
@@ -248,6 +293,7 @@ BEGIN
     VALUES(:NEW.first_name, :NEW.last_name, :NEW.email, :NEW.phone, l_customer_id);
 END;
 
+FOLLOWS|PRECEEDS for trigger sequence
 ###########################################################################################################################
 
 --OPTIMIZING
@@ -644,50 +690,6 @@ There are 2 main approach to optimize:
 
 6. Hints for Parallel Execution
 	/*+ PARALLEL(hr_emp, 5) */ --specify the desired number of concurrent servers that can be used for a parallel operation. 
-
-##################### BULK ##################### 
-
-CREATE OR REPLACE PROCEDURE update_credit (p_sex              IN customers.sex%TYPE,
-                                           p_percent_change   IN NUMBER)
-AS
-    CURSOR customer_cur
-    IS
-        SELECT customer_id
-          FROM customers
-         WHERE sex = p_sex;
-
-    TYPE cust_id_table_type IS TABLE OF customers.customer_id%TYPE;
-    cust_id_table   cust_id_table_type;
-BEGIN
-    DBMS_OUTPUT.put_line ('Inside procedure');
-    OPEN customer_cur;
-    LOOP
-        FETCH customer_cur BULK COLLECT INTO cust_id_table LIMIT 100;
-        --FORALL indx IN 1 .. cust_id_table.COUNT SAVE EXCEPTIONS 
-		FORALL indx IN INDICES OF cust_id_table SAVE EXCEPTIONS --used with sparse collections
-            UPDATE customers
-               SET credit_limit = credit_limit + credit_limit * (p_percent_change / 100)
-             WHERE customer_id = cust_id_table (indx);
-        EXIT WHEN cust_id_table.COUNT = 0;
-    END LOOP;
-    CLOSE customer_cur;
-EXCEPTION
-    WHEN OTHERS
-    THEN
-		IF SQLCODE = -24381
-		THEN
-			DBMS_OUTPUT.put_line ('Error ' || SQLCODE || SQLERRM);
-			FOR indx IN 1 .. SQL%BULK_EXCEPTIONS.COUNT
-			LOOP
-				DBMS_OUTPUT.put_line (
-                  SQL%BULK_EXCEPTIONS (indx).ERROR_INDEX
-				|| ': '
-				|| SQL%BULK_EXCEPTIONS (indx).ERROR_CODE);
-			END LOOP;
-		else 
-			raise;
-		end if;	
-END update_credit;
 
 ############################ LOCKING ############################
 
