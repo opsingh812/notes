@@ -55,33 +55,14 @@ sort						asdasd
 	-n		Sorts numerically
 	-f		Case insensitive sorting
 	
-tr|sed|vi|grep				commands with Regular expressions
-	#Symbol	#Descriptions
-	.		replaces any character
-	^		matches start of string
-	$		matches end of string
-	*		matches up zero or more times the preceding character
-	\		Represent special characters
-	()		Groups regular expressions
-	?		Matches up exactly one character
-	\+		Matches one or more occurrence of the previous character
-	\?		Matches zero or one occurrence of the previous character
-	{n}		Matches the preceding character appearing ‘n’ times exactly
-	{n,m}	Matches the preceding character appearing ‘n’ times but not more than m
-	{n, }	Matches the preceding character only when it appears ‘n’ times or more
-	
-bg							To send a process to the background
-fg							To run a stopped process in the foreground
-top							Details on all Active Processes
-ps							Give the status of processes running for a user
-ps PID						Gives the status of a particular process
-pidof						Gives the Process ID (PID) of a process
-kill PID					Kills a process
-nice						Starts a process with a given priority. -20 to 19. Default 0. -20 is highest priority. 
-renice						Changes priority of an already running process
-df							Gives free hard disk space on your system
-free						Gives free RAM on your system
-
+grep						search text using Regular expressions
+tr 							Transform data. cat greekfile | tr [a-z] [A-Z] => GREEKFILE
+sed							stream editor. perform lots of functions on file like searching, find and replace, insertion or deletion
+							$sed 's/unix/linux/2' geekfile.txt => replaces the second occurrence of the word “unix” with “linux” in a line
+							'/g' replaces all occurences. (global)
+							$sed '1,3 s/unix/linux/' geekfile.txt => replaces line 1-3
+							$sed '5d' filename.txt => deletes first 5 lines. $d is for last line.
+vi 							edit in vi editor.							
 #VI Editing commands
 i							Insert at cursor (goes into insert mode)
 a							Write after cursor (goes into insert mode)
@@ -108,6 +89,40 @@ Note: You should be in the “command mode” to execute these commands. VI edit
 
 Make sure you press the right command otherwise you will end up making undesirable changes to the file. You can also enter the insert mode by pressing a, A, o, as required.
 
+	
+	#Symbol	#Descriptions
+	.		replaces any character
+	^		matches start of string
+	$		matches end of string
+	*		matches up zero or more times the preceding character
+	\		Represent special characters
+	()		Groups regular expressions
+	?		Matches up exactly one character
+	\+		Matches one or more occurrence of the previous character
+	\?		Matches zero or one occurrence of the previous character
+	{n}		Matches the preceding character appearing ‘n’ times exactly
+	{n,m}	Matches the preceding character appearing ‘n’ times but not more than m
+	{n, }	Matches the preceding character only when it appears ‘n’ times or more
+	
+bg							To send a process to the background
+fg							To run a stopped process in the foreground
+top							Details on all Active Processes
+ps							Give the status of processes running for a user
+ps PID						Gives the status of a particular process
+pidof						Gives the Process ID (PID) of a process
+kill PID					Kills a process
+nice						Starts a process with a given priority. -20 to 19. Default 0. -20 is highest priority. 
+renice						Changes priority of an already running process
+df							Gives free hard disk space on your system
+free						Gives free RAM on your system
+
+diff						Gives suggestion as A(add)C(change)D(delete) to make the files in sync.
+cmp							Differences between two files character by character, instead of line by line. No output for identical file.
+comm 						Gives 3 column output. 1st column has unique in file 1, 2 in 2 and 3rd contains common. comm -12 f1 f2 gives common.
+
+scp							Secure copy without starting FTP session or logging into host. uses ssh. scp joe@myhost:/demo*.htm .
+							scp localfile1.txt remote_username@serverIPaddress:/remote/myDataDir #Copy from local to remote
+
 #Permisions
 -rwxrwxrwx = File Permission
 .rwxrwxrwx = Directory Permission
@@ -129,31 +144,5 @@ abc.txt -rwxrw-r--
 	7		Read + Write +Execute	rwx
 
 
-
-
-
-
-
-ps
-date
-ls grep
-sed
-awk
-vi
-more
-cat
-view
-
-
-
-
-
-
-
-scp command
-
-awk
-
-nohup 
-
-execute script
+awk 						Awk is a scripting language used for manipulating data and generating reports.
+view 						View file in VI editor as read only mode.
