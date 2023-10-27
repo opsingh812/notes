@@ -1,0 +1,159 @@
+#UNIX
+#Command						#Description
+ls							Lists all files and directories in the present working directory
+ls – R						Lists files in sub-directories as well
+ls – a						Lists hidden files as well
+ls – al						Lists files and directories with detailed information like permissions, size, owner, etc.
+cat > filename				Creates a new file
+cat filename				Displays the file content
+cat file1 file2 > file3		Joins two files (file1, file2) and stores the output in a new file (file3)
+mv file “new file path”		Moves the files to the new location
+mv filename new_file_name	Renames the file to a new filename
+sudo						Allows regular users to run programs with the security privileges of the superuser or root
+rm filename					Deletes a file
+man							Gives help information on a command
+history						Gives a list of all past basic Linux commands list typed in the current terminal session
+clear						Clears the terminal
+mkdir directoryname			Creates a new directory in the present working directory or a at the specified path
+rmdir						Deletes a directory
+mv							Renames a directory
+pr -x						Divides the file into x columns
+pr -h						Assigns a header to the file
+pr -n						Denotes the file with Line Numbers
+lp -nc
+lpr c						Prints “c” copies of the File
+lp -d
+lpr -P						Specifies name of the printer
+apt-get						Command used to install and update packages
+mail -s ‘subject’ -c ‘cc-address’ -b ‘bcc-address’ ‘to-address’	Command to send email
+mail -s “Subject” to-address < Filename	Command to send email with attachment
+find . -name 'my*' 2>error.log
+							finding name of file starting with "my" in current directory(.)
+
+>							output redirection overwrite the existing file
+>> 							output redirection append to the existing file
+1>							Standard output redirection overwrite the existing file
+1>>							Standard output redirection append to the existing file
+2>							Error output redirection overwrite the existing file
+2>>							Error output redirection append to the existing file
+<							input redirection like attachement to mail. Mail -s "Subject" to-address < Filename
+>&							re-directs output of one file to another. 2>&1 means that STDERR redirects to the target of STDOUT.
+
+less|pg|more				which will show you only one scroll length of content at a time. cat abc.txt | less. q to exit.
+
+grep 						Searches for a string or pattern. cat abc.txt | grep -i omi
+	#Option	#Function
+	-v		Shows all the lines that do not match the searched string
+	-c		Displays only the count of matching lines
+	-n		Shows the matching line and its number
+	-i		Match both (upper and lower) case
+	-l		Shows just the name of the file with the string
+
+sort						asdasd
+	#Option	#Function
+	-r		Reverses sorting
+	-n		Sorts numerically
+	-f		Case insensitive sorting
+	
+tr|sed|vi|grep				commands with Regular expressions
+	#Symbol	#Descriptions
+	.		replaces any character
+	^		matches start of string
+	$		matches end of string
+	*		matches up zero or more times the preceding character
+	\		Represent special characters
+	()		Groups regular expressions
+	?		Matches up exactly one character
+	\+		Matches one or more occurrence of the previous character
+	\?		Matches zero or one occurrence of the previous character
+	{n}		Matches the preceding character appearing ‘n’ times exactly
+	{n,m}	Matches the preceding character appearing ‘n’ times but not more than m
+	{n, }	Matches the preceding character only when it appears ‘n’ times or more
+	
+bg							To send a process to the background
+fg							To run a stopped process in the foreground
+top							Details on all Active Processes
+ps							Give the status of processes running for a user
+ps PID						Gives the status of a particular process
+pidof						Gives the Process ID (PID) of a process
+kill PID					Kills a process
+nice						Starts a process with a given priority. -20 to 19. Default 0. -20 is highest priority. 
+renice						Changes priority of an already running process
+df							Gives free hard disk space on your system
+free						Gives free RAM on your system
+
+#VI Editing commands
+i							Insert at cursor (goes into insert mode)
+a							Write after cursor (goes into insert mode)
+A							Write at the end of line (goes into insert mode)
+ESC							Terminate insert mode
+u							Undo last change
+U							Undo all changes to the entire line
+o							Open a new line (goes into insert mode)
+dd							Delete line
+3dd							Delete 3 lines.
+D							Delete contents of line after the cursor
+C							Delete contents of a line after the cursor and insert new text. Press ESC key to end insertion.
+dw							Delete word
+4dw							Delete 4 words
+cw							Change word
+x							Delete character at the cursor
+r							Replace character
+R							Overwrite characters from cursor onward
+s							Substitute one character under cursor continue to insert
+S							Substitute entire line and begin to insert at the beginning of the line
+~							Change case of individual character
+
+Note: You should be in the “command mode” to execute these commands. VI editor is case-sensitive so make sure you type the commands in the right letter-case.
+
+Make sure you press the right command otherwise you will end up making undesirable changes to the file. You can also enter the insert mode by pressing a, A, o, as required.
+
+#Permisions
+-rwxrwxrwx = File Permission
+.rwxrwxrwx = Directory Permission
+
+r:Read w:Write x:Execute
+
+USER GROUP ALL
+
+chmod 764 abc.txt
+abc.txt -rwxrw-r-- 
+	#Number	#Permission Type			#Symbol
+	0		No Permission			—
+	1		Execute					–x
+	2		Write					-w-
+	3		Execute + Write			-wx
+	4		Read					r–
+	5		Read + Execute			r-x
+	6		Read +Write				rw-
+	7		Read + Write +Execute	rwx
+
+
+
+
+
+
+
+ps
+date
+ls grep
+sed
+awk
+vi
+more
+cat
+view
+
+
+
+
+
+
+
+scp command
+
+awk
+
+nohup 
+
+execute script
