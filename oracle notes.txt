@@ -1,7 +1,7 @@
 ###########################################################################################################################
 --EXCEPTION
 1. Internally defined exceptions, which arise from the Oracle Database environment ORA-27102 (out of memory)
-2. Predefined exceptions are errors which occur during the execution of the program.ZERO_DIVIDE, NO_DATA_FOUND, TOO_MANY_ROWS, INVALID_CURSOR,INVALID_NUMBER 	
+2. Predefined exceptions are errors which occur during the execution of the program.ZERO_DIVIDE, NO_DATA_FOUND, TOO_MANY_ROWS, INVALID_CURSOR,INVALID_NUMBER
 3. User-defined exceptions are custom exception defined by users like you. User-defined exceptions must be raised explicitly.
 
 The following table illustrates the differences between exception categories.
@@ -83,7 +83,7 @@ Result: 'JUL 09TH, 2003' -- date to varchar
 		TYPE assoc_array_str_type2 IS TABLE OF VARCHAR2(32) INDEX BY VARCHAR2(64);
 		v5('Greece') := 'calfornia';
 
-		FIRST, LAST, COUNT, NEXT, PRIOR, EXTEND,TRIM
+		FIRST, LAST, COUNT, NEXT, PRIOR, EXTEND, TRIM
 ###########################################################################################################################
 
 --CURSOR (pointer that points to a result of a query)
@@ -93,7 +93,7 @@ Result: 'JUL 09TH, 2003' -- date to varchar
 		* we have to control over its execution cycle from OPEN, FETCH, and CLOSE
 		* cursor_name%ROWCOUNT, cursor_name%ISOPEN, cursor_name%FOUND, and cursor_name%NOTFOUND
 
---LIFE CYCLE 
+--LIFE CYCLE
 DECLARE
   CURSOR summary (fromDate date := '01-JAN-2022')
   IS
@@ -187,51 +187,6 @@ CURSOR cursor_name IS
     FOR UPDATE;
 	--FOR UPDATE OF column_name;
 
---##################### BULK ##################### 
-
-CREATE OR REPLACE PROCEDURE update_credit (p_sex              IN customers.sex%TYPE,
-                                           p_percent_change   IN NUMBER)
-AS
-    CURSOR customer_cur
-    IS
-        SELECT customer_id
-          FROM customers
-         WHERE sex = p_sex;
-
-    TYPE cust_id_table_type IS TABLE OF customers.customer_id%TYPE;
-    cust_id_table   cust_id_table_type;
-BEGIN
-    DBMS_OUTPUT.put_line ('Inside procedure');
-    OPEN customer_cur;
-    LOOP
-        FETCH customer_cur BULK COLLECT INTO cust_id_table LIMIT 100;
-        --FORALL indx IN 1 .. cust_id_table.COUNT SAVE EXCEPTIONS 
-		FORALL indx IN INDICES OF cust_id_table SAVE EXCEPTIONS --used with sparse collections
-            UPDATE customers
-               SET credit_limit = credit_limit + credit_limit * (p_percent_change / 100)
-             WHERE customer_id = cust_id_table (indx);
-        EXIT WHEN cust_id_table.COUNT = 0;
-    END LOOP;
-    CLOSE customer_cur;
-EXCEPTION
-    WHEN OTHERS
-    THEN
-		IF SQLCODE = -24381
-		THEN
-			DBMS_OUTPUT.put_line ('Error ' || SQLCODE || SQLERRM);
-			FOR indx IN 1 .. SQL%BULK_EXCEPTIONS.COUNT
-			LOOP
-				DBMS_OUTPUT.put_line (
-                  SQL%BULK_EXCEPTIONS (indx).ERROR_INDEX
-				|| ': '
-				|| SQL%BULK_EXCEPTIONS (indx).ERROR_CODE);
-			END LOOP;
-		else 
-			raise;
-		end if;	
-END update_credit;
-
-
 ###########################################################################################################################
 --TRIGGER
 CREATE OR REPLACE TRIGGER customers_audit_trg
@@ -293,32 +248,8 @@ BEGIN
     VALUES(:NEW.first_name, :NEW.last_name, :NEW.email, :NEW.phone, l_customer_id);
 END;
 
-FOLLOWS|PRECEEDS for trigger sequence
 ###########################################################################################################################
 
---OPTIMIZING
-
-Use of Proper Indexing Techniques
-	B-Tree (Balanced Tree) Index (default)
-	Bit-map index 
-	Create indexes on group by and order by columns 
-	Avoid indexing on small tables
-	Create Composite indexes 
-	Response Time(first record) and Total Execution time(all records)
-	
-1.Use column names in the Query in-spite of using * operator to select all records
-
-2.Avoid use of Distinct clause in query as it increases the sorts.
-
-3.Avoid Use of not equal to in where clause in-spite of that use greater than and less than operator
-
-4.Avoid Having clause or group by clause if possible.
-
-5.Avoid use of Union statement in the query in-spite of that try to use union all statement.
-
-6. Avoid inner queries and use joins instead.
-
-7. use table partitioning
 
 
 
@@ -629,6 +560,7 @@ CREATE OR REPLACE DIRECTORY bfile_dir AS '/private1/LOB/files';
 17. ROUND(DATE '2017-07-16', 'MM')	:01-AUG-17	Return a date rounded to a specific unit of measure.
 18. TRUNC(DATE '2017-07-16', 'MM')	:01-JUL-17	Return a date truncated to a specific unit of measure. 
 
+
 --ANALYTICAL FUNCTION 
 1. CUME_DIST	Calculate the cumulative distribution of a value in a set of values
 2. DENSE_RANK	Calculate the rank of a row in an ordered set of rows with no gaps in rank values.
@@ -658,14 +590,14 @@ LISTAGG(last_name, '; ')
 3. DISTINCT Option for LISTAGG Aggregate
 4. immutable table and blockchain table
 
-###################### HINTS ######################
+--###################### HINTS ######################
 There are 2 main approach to optimize:
 	A. Rule Based Optimization (discontinued after 10g as it limited to handle complex queries) 
 	B. Cost Based Optimization
 
 1. Hints for Optimization Approaches and Goals
 	/*+ ALL_ROWS */ 		--explicitly chooses the cost-based approach to optimize
-	/*+ FIRST_ROWS(10) */ 	--fetch first 10 rows as quickly as possible 
+	/*+ FIRST_ROWS(10) */ 	--fetch first 10 rows as quickly as possible
 	/*+ CHOOSE */ 			--optimizer to choose between the rule-based and cost-based approaches
 	/*+ RULE */ 			--explicitly chooses the rule-based approach to optimize
 	
@@ -690,6 +622,76 @@ There are 2 main approach to optimize:
 
 6. Hints for Parallel Execution
 	/*+ PARALLEL(hr_emp, 5) */ --specify the desired number of concurrent servers that can be used for a parallel operation. 
+	
+--OPTIMIZING
+
+Use of Proper Indexing Techniques
+	B-Tree (Balanced Tree) Index (default)
+	Bit-map index 
+	Create indexes on group by and order by columns 
+	Avoid indexing on small tables
+	Create Composite indexes 
+	Response Time(first record) and Total Execution time(all records)
+	
+1.Use column names in the Query in-spite of using * operator to select all records
+2.Avoid use of Distinct clause in query as it increases the sorts.
+3.Avoid Use of not equal to in where clause in-spite of that use greater than and less than operator
+4.Avoid Having clause or group by clause if possible. along with IN and NOT IN. (use exists or not exists)
+5.Avoid use of Union statement in the query in-spite of that try to use union all statement.
+6. Avoid inner queries and use joins instead.
+7. use table partitioning.
+
+8. Analyze the explain plan and identify high impact SQL statements.
+9. Add required filter conditions and remove unwanted joins.
+10.Avoid and remove FTS (full table scans) on large tables. Note that in some cases, full table scans on small tables are faster and improve query fetch. Ensure that you use caching for small tables.
+11.Use SQL hints to force use of proper indexes.
+12. Avoid complex sub-queries and use Global Temporary Tables where necessary.
+13. Use Oracle SQL Analytical functions for multiple aggregation.
+14. Use CASE statements and DECODE functions for complex aggregate functions.
+
+--##################### BULK ##################### 
+
+CREATE OR REPLACE PROCEDURE update_credit (p_sex              IN customers.sex%TYPE,
+                                           p_percent_change   IN NUMBER)
+AS
+    CURSOR customer_cur
+    IS
+        SELECT customer_id
+          FROM customers
+         WHERE sex = p_sex;
+
+    TYPE cust_id_table_type IS TABLE OF customers.customer_id%TYPE;
+    cust_id_table   cust_id_table_type;
+BEGIN
+    DBMS_OUTPUT.put_line ('Inside procedure');
+    OPEN customer_cur;
+    LOOP
+        FETCH customer_cur BULK COLLECT INTO cust_id_table LIMIT 100;
+        --FORALL indx IN 1 .. cust_id_table.COUNT SAVE EXCEPTIONS 
+		FORALL indx IN INDICES OF cust_id_table SAVE EXCEPTIONS --used with sparse collections
+            UPDATE customers
+               SET credit_limit = credit_limit + credit_limit * (p_percent_change / 100)
+             WHERE customer_id = cust_id_table (indx);
+        EXIT WHEN cust_id_table.COUNT = 0;
+    END LOOP;
+    CLOSE customer_cur;
+EXCEPTION
+    WHEN OTHERS
+    THEN
+		IF SQLCODE = -24381
+		THEN
+			DBMS_OUTPUT.put_line ('Error ' || SQLCODE || SQLERRM);
+			FOR indx IN 1 .. SQL%BULK_EXCEPTIONS.COUNT
+			LOOP
+				DBMS_OUTPUT.put_line (
+                  SQL%BULK_EXCEPTIONS (indx).ERROR_INDEX
+				|| ': '
+				|| SQL%BULK_EXCEPTIONS (indx).ERROR_CODE);
+			END LOOP;
+		else 
+			raise;
+		end if;	
+END update_credit;
 
 ############################ LOCKING ############################
 
@@ -702,3 +704,81 @@ ROW SHARE/SHARE UPDATE			Allows concurrent access to the table, but users are pr
 
 ROW EXCLUSIVE		Allows concurrent access to the table, but users are prevented from locking the entire table with exclusive access and locking the table in share mode.
 SHARE ROW EXCLUSIVE	Users can view records in table, but are prevented from updating the table or from locking the table in SHARE mode.
+
+--######################### EXTERNAL FILES #############################
+create DIRECTORY EXTERNAL_DIR as 'C:\app\opsin\product\21c\external';
+
+select * from all_directories;
+--Place the file in this directory 
+
+create table employee_external
+(
+"EMPLOYEE_ID"	number,
+"FIRST_NAME"	varchar2(30),
+"LAST_NAME" varchar2(30),
+"EMAIL" varchar2(30),
+"PHONE_NUMBER" varchar2(20),	
+"SALARY" number,
+"HIRE_DATE" date
+) 
+organization external(
+ type oracle_loader
+ default directory EXTERNAL_DIR
+ access parameters (
+    RECORDS DELIMITED BY NEWLINE skip 1
+    BADFILE 'employee_external.bad'  
+    LOGFILE 'employee_external.log'
+    FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
+    MISSING FIELD VALUES ARE NULL
+    )
+ location ('employees.csv')   
+)
+parallel 1;
+
+--Partitioned External Table
+CREATE TABLE "SYSTEM"."EMPLOYEE_PARTITION_EXTERNAL" (	
+    "EMPLOYEE_ID" NUMBER, 
+	"FIRST_NAME" VARCHAR2(30 BYTE), 
+	"LAST_NAME" VARCHAR2(30 BYTE), 
+	"EMAIL" VARCHAR2(30 BYTE), 
+	"PHONE_NUMBER" VARCHAR2(20 BYTE), 
+	"SALARY" NUMBER, 
+	"HIRE_DATE" DATE, 
+	"REGION" VARCHAR2(5 BYTE)
+   ) 
+   ORGANIZATION EXTERNAL ( 
+    TYPE ORACLE_LOADER
+    DEFAULT DIRECTORY "EXTERNAL_DIR"
+    ACCESS PARAMETERS(
+        RECORDS DELIMITED BY NEWLINE SKIP 1
+        BADFILE 'employee_partition_external.bad'
+        LOGFILE 'employee_partition_external.log'
+        FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' MISSING FIELD VALUES ARE NULL
+        )
+    )
+    REJECT LIMIT UNLIMITED 
+    PARTITION BY LIST ("REGION") (
+        PARTITION "PART_SW"  VALUES ('SW') LOCATION ('emp_sw.csv'), 
+        PARTITION "PART_MW"  VALUES ('MW') LOCATION ( 'emp_mw.csv'), 
+        PARTITION "PART_OTHER"  VALUES (null) 
+    );
+
+################################# SQL LOADER 
+
+>sqlldr userid=system/1234 control='emp_load.ctl' skip=1
+
+LOAD DATA
+INFILE 'C:\app\opsin\product\21c\external\employees.csv'
+TRUNCATE -- or INSERT or APPEND
+INTO TABLE EMPLOYEE_SQL_LOADER
+FIELDS TERMINATED BY ","
+TRAILING NULLCOLS
+(
+	EMPLOYEE_ID, 
+	FIRST_NAME, 
+	LAST_NAME, 
+	EMAIL,
+	PHONE_NUMBER,
+	SALARY, 
+	HIRE_DATE
+)
