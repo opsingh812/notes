@@ -1,0 +1,98 @@
+ALTER SYSTEM FLUSH SHARED_POOL;
+
+Types of access paths:
+
+1. Table Access Path
+	Full Table Scan
+	Full Table Scan using ROWID
+	Sample Table Scan (e.g. Scan 10% of table)
+
+2. Index Access Path
+	Index Unique Scan
+	Index Range Scan
+	Index Full Scan
+	Index Fast Full Scan
+	Index Skip Scan
+	Index Join Scan
+	
+Reasons for BAD SQL:
+1. Poorly written query
+2. Index used/not used.
+3. Index missing.
+4. Predicates not used.
+5. Wrong join order
+
+Common Sollutions:
+1. Update statistics.
+2. Use dynamic statistics
+3. Create or modify indexes.
+4. Rewrite the query.
+5. Use hints/ Remove bad hints.
+6. Eliminate implicit data type consversion
+7. Create function based index.
+8. Use index organised table
+9. Change the optimizer mode.
+10. Use parallel execution.
+11. Use materialized view
+12. Modify or disable constraint / trigger
+13. Avoid using select *.
+14. Avoid concatination(|). instead use AND
+15. Use wild card at end in LIKE
+16. Use EXISTS instead of IN is inner table is small.
+17. Using partition pruning
+18. Use bulk collect.
+19. JOIN ORDER 
+	- If tableA is indexed and tableB is not. Use tableA as inner table
+	- If tableA and tableB both are indexed then use smaller table as driving table.
+20. Using temp table or use WITH clause.
+
+Steps to follow:
+
+1. Check execution plan for problamatic area.
+2. Check the statistics.
+3. Check query for common mistakes.
+4. Check execution plan in detail:
+	* Check access path
+	* Check join orders and join types
+	* Compare actual and estimated number or rows
+	* Check the operation where cost and logical read differ significantly.
+
+Execution Plan:
+1. Autotrace
+	SET AUTOTRACE ON;
+	SET AUTOTRACE TRACEONLY;
+	SET AUTOTRACE TRACEONLY EXPLAIN|STATISTICS;
+	SET LINESIZE=20;
+	--QUERY
+	SHOW AUTOTRACE;
+	SET AUTOTRACE OFF; 
+	
+2. Real time SQL Monitor (v$sql_monitor, v$sql_plan_monitor) add "monitor" hint for < 5 sec query.
+3. TKPROF (parse, execution, fetch time)
+	SELECT VALUE FROM V$DIAG_INFO WHERE NAME='Diag Trace';--Location of trace file
+	tkprof trace_file new_file
+	
+	ALTER SESSION SET TRACEFILE_IDENTIFIER= OMI;
+	ALTER SESSION SET SQL_TRACE= TRUE|FALSE;
+
+	DBMS_SESSION.SESSION_TRACE_ENABLE(wait=>TRUE, binds=>FALSE);
+	DBMS_SESSION.SESSION_TRACE_DISABLE();
+
+	DBMS_MONITOR.SESSION_TRACE_ENABLE(session_id=>27,serial_num=>60,wait=>TRUE, binds=>FALSE);
+	DBMS_MONITOR.SESSION_TRACE_DISABLE(session_id=>27,serial_num=>60);
+
+4. DBMS_XPLAN
+
+
+ADVANCE TECHNIQUES:
+
+1. Star Transformation.
+	ALTER SESSION SET star_transformation_enabled=true;
+	
+	/*+ star_transformation fact(s)*/
+2. Using bind veriable will reduce parse count. (:value)
+3. Cursor sharing where similar queries will stored and "loaded" as single entity and can be reused. Control over implicit cursor with bind veriable.
+	ALTER SESSION SET cursor_sharing = 'EXACT'; --Default
+	ALTER SESSION SET cursor_sharing = 'FORCE';
+4. Dynamic Sampling /*+ GATHER_PLAN_STATISTICS dynamic_sampling(11) */
+
