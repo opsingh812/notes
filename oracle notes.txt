@@ -611,6 +611,7 @@ There are 2 main approach to optimize:
 3. Hints for Query Transformations
 	/*+USE_CONCAT*/			--forces combined OR conditions in the WHERE clause of a query to be transformed into a compound query using the UNION ALL set operator.
 	/*+MERGE(v)*/ 			--lets you merge a view for each inner query.
+	/*+NO_MERGE*/			--lets you not to merge a view for each inner query.
 	
 4. Hints for Join Orders
 	/*+ORDERED */			--causes Oracle to join tables in the order in which they appear in the FROM clause
