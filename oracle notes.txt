@@ -622,7 +622,11 @@ There are 2 main approach to optimize:
 
 6. Hints for Parallel Execution
 	/*+ PARALLEL(hr_emp, 5) */ --specify the desired number of concurrent servers that can be used for a parallel operation. 
-	
+
+/*+ RESULT_CACHE */ store the query result in cache. To be use wisely
+EXEC DBMS_RESULT_CACHE.FLUSH;
+SELECT * FROM V$RESULT_CACHE_OBJECTS;
+
 --OPTIMIZING
 
 Use of Proper Indexing Techniques
