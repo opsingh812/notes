@@ -603,9 +603,9 @@ There are 2 main approach to optimize:
 	
 2. Hints for Access Paths
 	/*+ FULL(e) */			--explicitly chooses a full table scan
-	/*+ ROWID(employees)*/	--explicitly chooses a table scan by rowid
+	/*+ ROWID(employees)*/		--explicitly chooses a table scan by rowid
 	/*+ CLUSTER */			--explicitly chooses a cluster scan to access the specified table
-	/*+ HASH */				--explicitly chooses a hash scan to access the specified table
+	/*+ HASH */			--explicitly chooses a hash scan to access the specified table
 	/*+ INDEX(idx) */		--explicitly chooses an index scan for the specified table
 
 3. Hints for Query Transformations
@@ -618,8 +618,10 @@ There are 2 main approach to optimize:
 	
 5. Hints for Join Operations
 	/*+ USE_NL(l h) */		--use nested loops join, used for small table. Fetches first rows fast.
-	/*+ USE_MERGE(l,h) */	--use sort merge join, the data must be sorted
-	/*+ USE_HASH(l h) */	--use hash join, hash table is created and matched.
+	/*+ USE_MERGE(l h) */		--use sort merge join, the data must be sorted
+	/*+ USE_HASH(l h) */		--use hash join, hash table is created and matched.
+
+	/*+ LEADING(h) USE_NL(l h)*/	-- will use table h as driving/leading/outer table and perform nested loop join
 
 6. Hints for Parallel Execution
 	/*+ PARALLEL(hr_emp, 5) */ --specify the desired number of concurrent servers that can be used for a parallel operation. 
