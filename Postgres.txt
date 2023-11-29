@@ -119,62 +119,108 @@ VACUUM FULL table_name; This would not only free up the unused space in the tabl
 						
 						
 						
---FUNCTIONS 
+########################## STRING FUNCTIONS ####################################### 
+1. INITCAP( string )		
+	select INITCAP('Learn PostgreSQL with Tech on the Net!');--Learn Postgresql With Tech On The Net!
 
-localtime( [ precision ] ) / localtime( [ precision ] )
-SELECT localtimestamp(3);--2014-04-24 20:18:08.587
-SELECT localtime;		 --20:55:09.808294
+2. LEFT(string,n)			First n character. Omits n character from right if -n is provided.  
+	select LEFT('INDIA',2);-- IN 
 
-now() /current_timestamp /current_time
-select now(); 			--2023-06-05 15:54:46.568493+00
-select current_time(4);	--15:55:32.116300+00:00
+3. RIGHT(string,n)			Last n character. Omits n character from left if -n is provided.
+	select RIGHT('INDIA',2);-- IA 
 
-AGE(time1- time2)-- interval
+4. SPLIT_PART(string,delimeter,n) 	split the string to array using delimeter to split and return nth value
+	select split_part('ABC|XYZ|MNO','|',2); -- XYZ 
 
-EXTRACT(year from timestamp)/  DATE_PART('year', timestamp)
+5. TRIM(LEADING|TRAILING|BOTH [char] from string)	--removes char from string. Spaces are removed by default.
+	select trim(leading '0' from '000123'); --123
+
+6. LTRIM(string,[char]); --removes char from left side of string. Spaces are removed by default.
+	select ltrim('yummy','y'); --ummy
+
+7. RTRIM(string,[char]); --removes char from right side of string, Spaces are removed by default.
+	select rtrim('yummy','y'); --yumm
+
+8. BRIM(string,[char]); --removes char from both side of string, Spaces are removed by default.
+	select btrim('yummy','y'); --umm
+	
+9. LPAD(string, length, pad_string) --pads a string on left to meet the specified length. Spaces are padded by default.
+	select lpad('1234',8,'0'); --00001234
+	
+10.RPAD(string, length, pad_string) --pads a string on right to meet the specified length. Spaces are padded by default.
+	select rpad('1234',8,'0'); --12340000
+
+11.POSITION( substring in string ) / STRPOS( string, substring ) --returns the starting position of matched substring.
+	SELECT POSITION('h' in 'techonthenet.com'); --4
+
+12.SUBSTRING( string [from start_position] [for length] ) / SUBSTRING ( string ,start_position , length )
+	SELECT SUBSTRING('PostgreSQL' from 1 for 8);	-- PostgreS
+	SELECT SUBSTRING ('PostgreSQL', 1, 8);			-- PostgreS
+	select SUBSTRING('vimal.verma@gmail.com' from '^(.*)@'); 	--vimal.verma
+	select SUBSTRING('vimal.verma@gmail.com' from '@(.*)$'); 	--gmail.com
+
+13.REPEAT( string, number )
+	SELECT REPEAT('a', 5);	--aaaaa
+
+14.REPLACE( string, from_substring, to_substring )
+	SELECT REPLACE('abc abc', 'a', 'B');	--Bbc Bbc
+	SELECT REPLACE('monthoxyzn', 'on', 'ABC'); --mABCthoxyzn			*Whole String is replaced
+
+15.TRANSLATE( string1, string_to_replace, replacement_string)
+	SELECT TRANSLATE('monthoxyzn', 'on', 'ABC');--mABthAxyzB			*Characarter by character is replaced
+	
+16. TO_CHAR(expression,format)	--Converts these to string: timestamp, interval, integer, double precision
+
+count(*)/count(any_number) 	--will give total number of rows, irrespective of null values.
+count(column_name)			--will give total non null values in that column.
+
+########################## DATE FUNCTIONS ####################################### 
+
+SET DateStyle='ISO, DMY'; ISO|Postgres|SQL|German and DMY|YDM|MDY
+
+1. localtime( [ precision ] ) / localtime( [ precision ] )
+	SELECT localtimestamp(3);--2014-04-24 20:18:08.587
+	SELECT localtime;		 --20:55:09.808294
+
+2. now() /current_timestamp /current_time
+	select now(); 			--2023-06-05 15:54:46.568493+00
+	select current_time(4);	--15:55:32.116300+00:00
+
+3. AGE(time1- time2)	-- interval
+	select age(date '01-AUG-2023'); -- current_Date - 01-AUG-2023 = "3 mons 28 days"
+
+4. MAKE_DATE(YYYY,MM,DD) 		--create dates
+	select make_date(2023,11,29);
+
+5. MAKE_TIME(HH24,MM,SS)		-- creates time without timezone
+	select make_time(16,30,12);
+	
+6. MAKE_TIMESTAMP(YYYY,MM,DD,HH,MM,SS)	--creats timestamp without timezone
+	select MAKE_TIMESTAMP(2023,11,29,16,30,12);
+	
+7. MAKE_TIMESTAMPTZ(YYYY,MM,DD,HH,MM,SS,[TZ]) 
+	select MAKE_TIMESTAMPTZ(2023,11,29,16,30,12); --"2023-11-29 16:30:12+05:30"
+	select MAKE_TIMESTAMPTZ(2023,11,29,16,30,12,'EST'); --"2023-11-30 03:00:12+05:30"
+
+8. MAKE_INTERVAL(years,months,weeks,days, hours, minutes, seconds);
+	select make_interval(weeks=>2); --14 days
+	select make_interval(2020,1,2,1,10,30,45); -- 2020 years 1 months 15 days 10:30:45
+	
+9. EXTRACT(field from source)/DATE_PART(field,source)
+	select EXTRACT(year from timestamp);/ select DATE_PART('year', timestamp);
+	DOW(starts with Sunday=0), ISODOW(starts with Monday=1), DOY, EPOCH, QUARTER, CENTURY, DECADE
+	
+10. (DATE1,DATE2) OVERLAPS (DATE3,DATE4) -- returns true or false, border values are not checked for overlap.
+
+
+
+
 
 TRUNC( number, [ decimal_places ] )
 SELECT trunc(125.315, 2);--125.31
 SELECT trunc(125.315, -1);--120
 
-BTRIM( string, trim_character ) / ltrim( string, trim_character ) / rtrim( string, trim_character ) / trim( [ leading | trailing | both ] [ trim_character ] from string )
-SELECT btrim('123Te123ch123', '123');	--Te123ch
-SELECT btrim('    XYZ    ');			--XYZ
 
-
-LPAD( string, length, pad_string ) / rpad( string, length, pad_string )
-SELECT LPAD('abc', 10, 'XYZ');--XYZXYZXabc
-SELECT RPAD('abc', 10, 'XYZ');--abcXYZXYZX
-
-
-INITCAP( string )
-select INITCAP('Learn PostgreSQL with Tech on the Net!');--Learn Postgresql With Tech On The Net!
-
-
-POSITION( substring in string ) / STRPOS( string, substring )
-SELECT POSITION('h' in 'techonthenet.com'); --4
-
-
-REPEAT( string, number )
-SELECT REPEAT('a', 5);	--aaaaa
-
-
-REPLACE( string, from_substring, to_substring )
-SELECT REPLACE('abc abc', 'a', 'B');	--Bbc Bbc
-SELECT REPLACE('monthoxyzn', 'on', 'ABC'); --mABCthoxyzn			*Whole String is replaced
-
-TRANSLATE( string1, string_to_replace, replacement_string)
-SELECT TRANSLATE('monthoxyzn', 'on', 'ABC');--mABthAxyzB			*Characarter by character is replaced
-
-
-SUBSTRING( string [from start_position] [for length] ) / SUBSTRING ( string ,start_position , length )
-SELECT SUBSTRING('PostgreSQL' from 1 for 8);	-- PostgreS
-SELECT SUBSTRING ('PostgreSQL', 1, 8);			-- PostgreS
-
-SUBSTRING(string FROM pattern) / SUBSTRING(string,pattern) 
-SELECT SUBSTRING ('The house no. is 9001','([0-9]{1,4})');	-- 9001
-select SUBSTRING('vimal.verma@gmail.com' from '^(.*)@'); 	--vimal.verma
-select SUBSTRING('vimal.verma@gmail.com' from '@(.*)$'); 	--gmail.com
 
 FORMAT('%s, %s',string1, string2)
 FORMAT('%s, %s',last_name, first_name); --Singh, Omendra
@@ -208,3 +254,21 @@ SELECT * FROM TABA WHERE COL1 ILIKE 'ABC%'; -- USE _ FOR SINGLE CHARACTER CHECK 
 select 'oracle'||'postgres'; --does not handle NULL.
 select concat('oracle','postgres');
 select concat_ws(' ','oracle','postgres');
+
+-- CUSTOM DATATYPE
+CREATE DOMAIN ADDR VARCHAR(100) NOT NULL; 
+CREATE DOMAIN POSITIVE_NUMBER INT NOT NULL CHECK(VALUE>0);
+CREATE TABA (ADDRESS ADDR, MARKS POSITIVE_NUMBER);
+
+--COMPOSITE CUSTOM DATATYPE
+CREATE TYPE addr as (city VARCHAR(50),country varchar(50));
+create type gender as enum ('Male','Female');
+create taba(address addr, orientation gender);
+insert into taba(address, orientation) values(row('Delhi','India'),'Male');
+select (address).city,orientation from taba;
+
+--SEQUENCE 
+CREATE SEQUENCE IF NOT EXISTS SEQ AS SMALLINT
+START 50 INCREMENT -1 MINVALUE 10 MAXVALUE 200 CYCLE; 
+
+
