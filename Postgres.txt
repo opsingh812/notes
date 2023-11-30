@@ -74,7 +74,6 @@ Gist:  Generalised Search Tree
 SP GIST:   Space partitioned GIST 
 
 pg_indexes --contains details of indexes.
-pg_size_pretty(pg_index_size('table_idx')); -- size of index
 pg_size_pretty(pg_indexes_size('table_idx'));
 pg_size_pretty(pg_relation_size('table')); --table size
 pg_size_pretty(pg_total_relation_size('table'));-- table+index
@@ -83,11 +82,9 @@ pg_size_pretty(pg_total_relation_size('table'));-- table+index
 pg_stat_all_indexes -- contains index stats
 pg_an -- all nodes available in postgres;
 
-pg_stat_activity
-pg_user
-pg_settings
+pg_stat_activity --task manager
+pg_settings --postgres settings
 pg_class
-pg_hint_plan
 
 EXPLAIN (FORMAT JSON|TEXT|XML|YML) select * from tabA;
 SHOW max_parallel_workers_per_gather; --this should be 1 to study cost.
@@ -97,8 +94,8 @@ COST=
 + (cpu_tuple_cost * total_records)    
 + (cpu_operator_cost * total_records)
 
-REINDEX [VERBOSE] {TABLE|INDEX|SCHEMA|DATABASE|SYSTEM} [CONCURRENTLY] name; 
-	reindex index emp_id_idx; --invalidate the index by setting indisvalid=false in pg_index;
+REINDEX (VERBOSE,CONCURRENTLY) {TABLE|INDEX|SCHEMA|DATABASE|SYSTEM} name; 
+	reindex index emp_id_idx; --invalidate the index by setting indisvalid=false in pg_index using pg_class;
 
 --################## VACUUM 
 VACUUM statement is used to reclaim storage by removing obsolete data or tuples
