@@ -59,7 +59,7 @@ TIMESTAMPTZ 						8 byte, date, time and timezone
 UUID								32 digit unique value. create extension if not exists "uuid-ossp"; product_id UUID Default UUID_GENERATE_V1(),
 ARRAY 								ARRAY['ABC','XYZ'], starts with 1.
 
---INDEX 
+--################## INDEX 
 CREATE [UNIQUE] INDEX [CONCURRENTLY] index_name
   [ USING BTREE | HASH | GIST | SPGIST | GIN ]
   ON table_name
@@ -72,6 +72,9 @@ SP GIST:   Space partitioned GIST
 GIN Generalized Inverted Index 
 BRIN Block Range Index
 
+pg_indexes --contains details of indexes.
+pg_size_pretty(pg_index_size('table_idx')); -- size of index
+pg_stat_all_indexes -- contais index stats 
 
 --###### ALTER TABLE
 --Add Column
@@ -210,28 +213,11 @@ SET DateStyle='ISO, DMY'; ISO|Postgres|SQL|German and DMY|YDM|MDY
 	select EXTRACT(year from timestamp);/ select DATE_PART('year', timestamp);
 	DOW(starts with Sunday=0), ISODOW(starts with Monday=1), DOY, EPOCH, QUARTER, CENTURY, DECADE
 	
-10. (DATE1,DATE2) OVERLAPS (DATE3,DATE4) -- returns true or false, border values are not checked for overlap.
+10.(DATE1,DATE2) OVERLAPS (DATE3,DATE4) -- returns true or false, border values are not checked for overlap.
 
+11.DATE_TRUNC(timestamp,precision)  -- truncates the data to precision level.
+	select date_trunc('hour', timestamp '29-NOV-2023 20:30:45');--'29-NOV-2023 20:00:00'
 
-
-
-
-TRUNC( number, [ decimal_places ] )
-SELECT trunc(125.315, 2);--125.31
-SELECT trunc(125.315, -1);--120
-
-
-
-FORMAT('%s, %s',string1, string2)
-FORMAT('%s, %s',last_name, first_name); --Singh, Omendra
-
-MD5(string)
-MD5 Hash
-
-
-#########################   HINTS:
-http://pghintplan.osdn.jp/pg_hint_plan.html
-http://pghintplan.osdn.jp/hint_list.html
 
 
 
@@ -272,3 +258,6 @@ CREATE SEQUENCE IF NOT EXISTS SEQ AS SMALLINT
 START 50 INCREMENT -1 MINVALUE 10 MAXVALUE 200 CYCLE; 
 
 
+--PG_DUMP 
+>pg_dump -d schema_name -h localhost -U local_user -n public > dump.sql
+>psql -h localhost -U local_user -d schema_name -f dump.sql
