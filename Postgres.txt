@@ -59,52 +59,48 @@ TIMESTAMPTZ 						8 byte, date, time and timezone
 UUID								32 digit unique value. create extension if not exists "uuid-ossp"; product_id UUID Default UUID_GENERATE_V1(),
 ARRAY 								ARRAY['ABC','XYZ'], starts with 1.
 
---################## INDEX 
+--################## INDEX ##################
 CREATE [UNIQUE] INDEX [CONCURRENTLY] index_name
   [ USING BTREE | HASH | GIST | SPGIST | GIN ]
   ON table_name
     (index_col1 [ASC | DESC], 
      index_col2 [ASC | DESC]);
-B Tree
-Hash index 
+
+B Tree --should be used where we want range of data or using logical operator
+Hash index --should be used where equality check. 
+BRIN Block Range Index -- stores min and max value of the block 
+GIN Generalized Inverted Index -- for text/array search scenario, points to multiple tuple
 Gist:  Generalised Search Tree 
 SP GIST:   Space partitioned GIST 
-GIN Generalized Inverted Index 
-BRIN Block Range Index
 
 pg_indexes --contains details of indexes.
 pg_size_pretty(pg_index_size('table_idx')); -- size of index
-pg_stat_all_indexes -- contais index stats 
+pg_size_pretty(pg_indexes_size('table_idx'));
+pg_size_pretty(pg_relation_size('table')); --table size
+pg_size_pretty(pg_total_relation_size('table'));-- table+index
 
---###### ALTER TABLE
---Add Column
-ALTER TABLE table_name
-  ADD new_column_name column_definition,
-  ADD new_column_name column_definition);
 
---Alter Column Type
-ALTER TABLE table_name
-  ALTER COLUMN column_name TYPE column_definition,
-  ALTER COLUMN column_name TYPE column_definition);
+pg_stat_all_indexes -- contains index stats
+pg_an -- all nodes available in postgres;
 
---Alter Column Name
-ALTER TABLE table_name
-  RENAME COLUMN old_name TO new_name;
-
---Drop Column  
-ALTER TABLE table_name
-  DROP COLUMN column_name;
-  
-  
-	 
-	 
 pg_stat_activity
 pg_user
 pg_settings
 pg_class
 pg_hint_plan
 
---VACUUM 
+EXPLAIN (FORMAT JSON|TEXT|XML|YML) select * from tabA;
+SHOW max_parallel_workers_per_gather; --this should be 1 to study cost.
+SHOW max_parallel_maintenance_workers;-- they work in background to update the indexes
+COST=
+(pg_relation_size('tab|indx')/8192 in bytes)  * seq_page_cost 
++ (cpu_tuple_cost * total_records)    
++ (cpu_operator_cost * total_records)
+
+REINDEX [VERBOSE] {TABLE|INDEX|SCHEMA|DATABASE|SYSTEM} [CONCURRENTLY] name; 
+	reindex index emp_id_idx; --invalidate the index by setting indisvalid=false in pg_index;
+
+--################## VACUUM 
 VACUUM statement is used to reclaim storage by removing obsolete data or tuples
 
 VACUUM [FULL] [FREEZE] [VERBOSE] [table_name ]; 
